@@ -3,11 +3,16 @@
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/server/auth"
+import { sendBookingConfirmation } from "@/server/actions/email"
 
 export async function approveBooking(bookingId: string) {
   try {
     const booking = await prisma.booking.findUnique({
-      where: { id: bookingId }
+      where: { id: bookingId },
+      include: {
+        user: true,
+        unit: true
+      }
     })
 
     if (!booking) return { error: "Booking not found" }
@@ -19,6 +24,20 @@ export async function approveBooking(bookingId: string) {
         paymentStatus: 'PARTIAL', 
       }
     })
+
+    // Send Email Notification
+    if (booking.user.email) {
+      await sendBookingConfirmation({
+        bookingId: booking.id,
+        guestName: booking.user.name || 'Guest',
+        guestEmail: booking.user.email,
+        unitName: booking.unit.name,
+        checkIn: booking.checkIn,
+        checkOut: booking.checkOut,
+        totalPrice: booking.totalPrice,
+        balance: booking.balance
+      })
+    }
 
     revalidatePath("/admin/bookings")
     revalidatePath("/admin/dashboard")
