@@ -1,6 +1,6 @@
 'use server';
  
-import { signIn } from '@/server/auth';
+import { signIn, signOut } from '@/server/auth';
 import { AuthError } from 'next-auth';
  
 export async function authenticate(
@@ -20,4 +20,8 @@ export async function authenticate(
     }
     throw error;
   }
+}
+
+export async function handleSignOut() {
+  await signOut({ redirectTo: '/admin/login' });
 }

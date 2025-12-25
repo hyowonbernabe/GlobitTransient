@@ -2,11 +2,19 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
+  const pathname = usePathname()
+
+  // STRICTLY HIDE on Admin and Portal routes
+  // This prevents the public navbar from showing up in the backend interfaces
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/portal')) {
+    return null
+  }
 
   const toggleMenu = () => setIsOpen(!isOpen)
 
