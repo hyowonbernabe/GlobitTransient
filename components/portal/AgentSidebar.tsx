@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, LogOut, Wallet, Link as LinkIcon, Menu, X } from 'lucide-react'
+import { LayoutDashboard, LogOut, Wallet, Link as LinkIcon, Menu, X, HandCoins } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { handleSignOut } from '@/server/actions/auth'
@@ -15,6 +15,7 @@ export function AgentSidebar() {
   const links = [
     { href: '/portal/dashboard', label: 'Overview', icon: LayoutDashboard },
     { href: '/portal/bookings', label: 'My Bookings', icon: Wallet },
+    { href: '/portal/claims', label: 'Manual Claims', icon: HandCoins },
     { href: '/portal/tools', label: 'Referral Tools', icon: LinkIcon },
   ]
 
