@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { MapPin, ArrowRight } from 'lucide-react'
 
 export function Hero() {
@@ -17,7 +17,7 @@ export function Hero() {
 
       <div className="relative z-10 container mx-auto px-4 text-center space-y-8">
         <div className="space-y-4">
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-1.5 rounded-full text-sm font-medium text-emerald-50 animate-fade-in-up">
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-1.5 rounded-full text-sm font-medium text-emerald-50">
             <MapPin className="w-4 h-4 text-emerald-300" />
             <span>Located near Burnham Park, Baguio City</span>
           </div>
@@ -36,7 +36,7 @@ export function Hero() {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
           <Link href="/book" className="w-full sm:w-auto">
-            <Button size="lg" className="w-full h-14 text-lg font-bold shadow-xl shadow-emerald-900/20">
+            <Button size="lg" className="w-full h-14 text-lg font-bold shadow-xl shadow-emerald-900/20 bg-primary hover:bg-emerald-800">
               Book Now
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>

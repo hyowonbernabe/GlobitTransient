@@ -1,5 +1,4 @@
-import { Facebook, MessageCircle, Phone } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { Facebook, Phone } from 'lucide-react'
 
 export function ContactSection() {
   return (
@@ -10,10 +9,6 @@ export function ContactSection() {
             
             {/* Image Side */}
             <div className="relative bg-emerald-800 min-h-[300px] flex items-end justify-center overflow-hidden">
-               {/* Owner Image Placeholder: 
-                  Should be a transparent PNG of the owner if possible, 
-                  or a nice portrait cut out.
-               */}
                <div className="absolute inset-0 bg-[url('/assets/images/placeholder.png')] bg-cover bg-center opacity-20 mix-blend-overlay" />
                <img 
                  src="/assets/images/placeholder.png" 
