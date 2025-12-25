@@ -4,8 +4,14 @@ import prisma from "@/lib/prisma"
 import { unitSchema } from "@/lib/validations/unit"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import { auth } from "@/server/auth"
+import { logActivity } from "@/server/actions/audit"
 
 export async function updateUnit(unitId: string, formData: FormData) {
+  const session = await auth()
+  // @ts-ignore
+  if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
+
   const rawData = {
     name: formData.get("name"),
     description: formData.get("description"),
@@ -37,6 +43,15 @@ export async function updateUnit(unitId: string, formData: FormData) {
       }
     })
 
+    // AUDIT LOG
+    await logActivity(
+      session.user.id!,
+      "UPDATE_UNIT",
+      "UNIT",
+      unitId,
+      `Updated details for ${data.name}`
+    )
+
     revalidatePath("/admin/units")
     revalidatePath(`/admin/units/${unitId}`)
     revalidatePath("/book")
@@ -49,6 +64,10 @@ export async function updateUnit(unitId: string, formData: FormData) {
 }
 
 export async function createUnit(formData: FormData) {
+  const session = await auth()
+  // @ts-ignore
+  if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
+
   const rawData = {
     name: formData.get("name"),
     description: formData.get("description"),
@@ -70,19 +89,26 @@ export async function createUnit(formData: FormData) {
 
   try {
     const data = result.data
-    
-    // Generate a slug from the name
     const slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now().toString().slice(-4)
 
-    await prisma.unit.create({
+    const unit = await prisma.unit.create({
       data: {
         ...data,
         slug,
         basePrice: data.basePrice * 100,
         extraPaxPrice: data.extraPaxPrice * 100,
-        images: ['/assets/images/placeholder.png'] // Default placeholder
+        images: ['/assets/images/placeholder.png'] 
       }
     })
+
+    // AUDIT LOG
+    await logActivity(
+      session.user.id!,
+      "CREATE_UNIT",
+      "UNIT",
+      unit.id,
+      `Created unit: ${data.name}`
+    )
 
     revalidatePath("/admin/units")
     revalidatePath("/book")
@@ -94,10 +120,11 @@ export async function createUnit(formData: FormData) {
 }
 
 export async function deleteUnit(unitId: string) {
+  const session = await auth()
+  // @ts-ignore
+  if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
+
   try {
-    // Check if unit has active bookings?
-    // Prisma will throw foreign key error if bookings exist unless cascade delete is on.
-    // Usually safer to check first.
     const activeBookings = await prisma.booking.findFirst({
         where: { 
             unitId,
@@ -109,9 +136,18 @@ export async function deleteUnit(unitId: string) {
         return { error: "Cannot delete unit with active bookings." }
     }
 
-    await prisma.unit.delete({
+    const unit = await prisma.unit.delete({
       where: { id: unitId }
     })
+
+    // AUDIT LOG
+    await logActivity(
+      session.user.id!,
+      "DELETE_UNIT",
+      "UNIT",
+      unitId,
+      `Deleted unit: ${unit.name}`
+    )
 
     revalidatePath("/admin/units")
     revalidatePath("/book")

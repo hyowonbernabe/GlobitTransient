@@ -3,8 +3,14 @@
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { createNotification } from "@/server/actions/notification"
+import { auth } from "@/server/auth"
+import { logActivity } from "@/server/actions/audit"
 
 export async function markCommissionPaid(commissionId: string) {
+  const session = await auth()
+  // @ts-ignore
+  if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
+
   try {
     const commission = await prisma.commission.update({
       where: { id: commissionId },
@@ -18,13 +24,22 @@ export async function markCommissionPaid(commissionId: string) {
       }
     })
 
-    // TRIGGER NOTIFICATION (To Agent)
+    // NOTIFY AGENT
     await createNotification(
       commission.agentId,
       "Commission Paid",
       `Your commission for ${commission.booking.user.name} has been paid out.`,
       "/portal/dashboard",
       "SUCCESS"
+    )
+
+    // AUDIT LOG
+    await logActivity(
+      session.user.id!,
+      "PAY_COMMISSION",
+      "COMMISSION",
+      commissionId,
+      `Paid out ${(commission.amount / 100).toFixed(2)} to ${commission.agent.name}`
     )
 
     revalidatePath("/admin/claims")
@@ -36,6 +51,10 @@ export async function markCommissionPaid(commissionId: string) {
 }
 
 export async function rejectCommission(commissionId: string) {
+  const session = await auth()
+  // @ts-ignore
+  if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
+
   try {
     const commission = await prisma.commission.update({
       where: { id: commissionId },
@@ -48,13 +67,22 @@ export async function rejectCommission(commissionId: string) {
       }
     })
 
-    // TRIGGER NOTIFICATION (To Agent)
+    // NOTIFY AGENT
     await createNotification(
       commission.agentId,
       "Claim Rejected",
       `Your claim for ${commission.booking.user.name} was rejected by admin.`,
       "/portal/claims",
       "ERROR"
+    )
+
+    // AUDIT LOG
+    await logActivity(
+      session.user.id!,
+      "REJECT_COMMISSION",
+      "COMMISSION",
+      commissionId,
+      `Rejected claim from ${commission.agent.name}`
     )
 
     revalidatePath("/admin/claims")

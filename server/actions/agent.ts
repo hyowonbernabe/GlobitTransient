@@ -4,8 +4,14 @@ import prisma from "@/lib/prisma"
 import { agentSchema } from "@/lib/validations/agent"
 import { revalidatePath } from "next/cache"
 import bcrypt from "bcryptjs"
+import { auth } from "@/server/auth"
+import { logActivity } from "@/server/actions/audit"
 
 export async function createAgent(formData: FormData) {
+  const session = await auth()
+  // @ts-ignore
+  if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
+
   const rawData = {
     name: formData.get("name"),
     email: formData.get("email"),
@@ -28,7 +34,6 @@ export async function createAgent(formData: FormData) {
   }
 
   try {
-    // Check for existing email
     const existingUser = await prisma.user.findUnique({
       where: { email: data.email }
     })
@@ -39,17 +44,26 @@ export async function createAgent(formData: FormData) {
 
     const hashedPassword = await bcrypt.hash(data.password, 10)
 
-    await prisma.user.create({
+    const agent = await prisma.user.create({
       data: {
         name: data.name,
         email: data.email,
         mobile: data.mobile,
         password: hashedPassword,
         role: 'AGENT',
-        commissionRate: data.commissionRate / 100, // Convert percentage to decimal (e.g., 5 -> 0.05)
+        commissionRate: data.commissionRate / 100, 
         agentCode: data.agentCode || `AGT-${Math.floor(Math.random() * 10000)}`
       }
     })
+
+    // AUDIT LOG
+    await logActivity(
+      session.user.id!,
+      "CREATE_AGENT",
+      "USER",
+      agent.id,
+      `Created agent account: ${data.name}`
+    )
 
     revalidatePath("/admin/agents")
     return { success: true }
@@ -60,8 +74,11 @@ export async function createAgent(formData: FormData) {
 }
 
 export async function deleteAgent(agentId: string) {
+  const session = await auth()
+  // @ts-ignore
+  if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
+
   try {
-    // Verify it's actually an agent before deleting to prevent accidents
     const agent = await prisma.user.findUnique({
       where: { id: agentId }
     })
@@ -74,6 +91,15 @@ export async function deleteAgent(agentId: string) {
       where: { id: agentId }
     })
     
+    // AUDIT LOG
+    await logActivity(
+      session.user.id!,
+      "DELETE_AGENT",
+      "USER",
+      agentId,
+      `Deleted agent account: ${agent.name}`
+    )
+
     revalidatePath("/admin/agents")
     return { success: true }
   } catch (error) {

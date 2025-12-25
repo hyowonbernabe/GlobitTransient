@@ -4,8 +4,13 @@ import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/server/auth"
 import { sendBookingConfirmation } from "@/server/actions/email"
+import { logActivity } from "@/server/actions/audit"
 
 export async function approveBooking(bookingId: string) {
+  const session = await auth()
+  // @ts-ignore
+  if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
+
   try {
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
@@ -39,6 +44,15 @@ export async function approveBooking(bookingId: string) {
       })
     }
 
+    // AUDIT LOG
+    await logActivity(
+      session.user.id!,
+      "APPROVE_BOOKING",
+      "BOOKING",
+      bookingId,
+      `Approved booking for ${booking.user.name} in ${booking.unit.name}`
+    )
+
     revalidatePath("/admin/bookings")
     revalidatePath("/admin/dashboard")
     revalidatePath("/admin/calendar")
@@ -50,6 +64,10 @@ export async function approveBooking(bookingId: string) {
 }
 
 export async function cancelBooking(bookingId: string) {
+  const session = await auth()
+  // @ts-ignore
+  if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
+
   try {
     await prisma.booking.update({
       where: { id: bookingId },
@@ -57,6 +75,15 @@ export async function cancelBooking(bookingId: string) {
         status: 'CANCELLED'
       }
     })
+
+    // AUDIT LOG
+    await logActivity(
+      session.user.id!,
+      "CANCEL_BOOKING",
+      "BOOKING",
+      bookingId,
+      "Cancelled booking reservation"
+    )
 
     revalidatePath("/admin/bookings")
     revalidatePath("/admin/dashboard")
@@ -82,11 +109,9 @@ export async function createManualBooking(formData: FormData) {
   const notes = formData.get('notes') as string
   const amountStr = formData.get('amount') as string
   
-  // Parse amount (expecting standard float string, convert to centavos)
   const amount = amountStr ? Math.round(parseFloat(amountStr) * 100) : 0
 
   try {
-    // 1. Check Availability
     const conflictingBooking = await prisma.booking.findFirst({
       where: {
         unitId,
@@ -101,7 +126,6 @@ export async function createManualBooking(formData: FormData) {
       return { error: "Dates are already booked for this unit." }
     }
 
-    // 2. Resolve User (Walk-In placeholder)
     let user = await prisma.user.findFirst({
         where: { email: 'walkin@globit.com' }
     })
@@ -117,8 +141,7 @@ export async function createManualBooking(formData: FormData) {
         })
     }
 
-    // 3. Create Booking
-    await prisma.booking.create({
+    const booking = await prisma.booking.create({
         data: {
             unitId,
             userId: user.id,
@@ -131,10 +154,19 @@ export async function createManualBooking(formData: FormData) {
             downpayment: 0, 
             balance: amount, 
             status: 'CONFIRMED', 
-            paymentStatus: amount > 0 ? 'FULL' : 'UNPAID', // Assume manual entry implies settlement or cash
+            paymentStatus: amount > 0 ? 'FULL' : 'UNPAID',
             notes: `Manual Booking: ${guestName}\n${notes}`
         }
     })
+
+    // AUDIT LOG
+    await logActivity(
+      session.user.id!,
+      "MANUAL_BOOKING",
+      "BOOKING",
+      booking.id,
+      `Manual booking created for ${guestName} (${amount / 100} PHP)`
+    )
 
     revalidatePath("/admin/calendar")
     revalidatePath("/portal/calendar")
@@ -160,7 +192,6 @@ export async function blockUnitDates(formData: FormData) {
   const notes = formData.get('notes') as string
 
   try {
-    // 1. Check Availability
     const conflictingBooking = await prisma.booking.findFirst({
       where: {
         unitId,
@@ -175,7 +206,6 @@ export async function blockUnitDates(formData: FormData) {
       return { error: "Dates are already booked/blocked for this unit." }
     }
 
-    // 2. Resolve User (Maintenance placeholder)
     let user = await prisma.user.findFirst({
         where: { email: 'maintenance@globit.com' }
     })
@@ -191,8 +221,7 @@ export async function blockUnitDates(formData: FormData) {
         })
     }
 
-    // 3. Create Block (Booking with 0 price)
-    await prisma.booking.create({
+    const booking = await prisma.booking.create({
         data: {
             unitId,
             userId: user.id,
@@ -209,6 +238,15 @@ export async function blockUnitDates(formData: FormData) {
             notes: `Blocked: ${reason}\n${notes}`
         }
     })
+
+    // AUDIT LOG
+    await logActivity(
+      session.user.id!,
+      "BLOCK_DATES",
+      "UNIT",
+      unitId,
+      `Blocked dates for ${reason}`
+    )
 
     revalidatePath("/admin/calendar")
     revalidatePath("/portal/calendar")
