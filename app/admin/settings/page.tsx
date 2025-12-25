@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { ExportSection } from "@/components/admin/ExportSection"
 
 export default function SettingsPage() {
   return (
@@ -12,6 +13,26 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid gap-6 max-w-2xl">
+        <ExportSection />
+
+        <Card>
+          <CardHeader>
+            <CardTitle>System Preferences</CardTitle>
+            <CardDescription>Global settings for the booking system.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+                <Label>Default Commission Rate (%)</Label>
+                <Input type="number" defaultValue={5} />
+            </div>
+            <div className="space-y-2">
+                <Label>Admin Contact Email</Label>
+                <Input type="email" defaultValue="admin@globit.com" />
+            </div>
+            <Button variant="outline">Save Preferences</Button>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Change Password</CardTitle>
@@ -27,20 +48,6 @@ export default function SettingsPage() {
               <Input id="new" type="password" />
             </div>
             <Button>Update Password</Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>System Preferences</CardTitle>
-            <CardDescription>Global settings for the booking system.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-                <Label>Default Commission Rate (%)</Label>
-                <Input type="number" defaultValue={5} />
-            </div>
-            <Button variant="outline">Save Preferences</Button>
           </CardContent>
         </Card>
       </div>
