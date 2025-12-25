@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ExportSection } from "@/components/admin/ExportSection"
+import { ChangePasswordForm } from "@/components/profile/ChangePasswordForm"
 
 export default function SettingsPage() {
   return (
@@ -13,8 +14,13 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid gap-6 max-w-2xl">
+        {/* Data Export Tools */}
         <ExportSection />
 
+        {/* Password Management */}
+        <ChangePasswordForm />
+
+        {/* Global Config (Placeholder for now) */}
         <Card>
           <CardHeader>
             <CardTitle>System Preferences</CardTitle>
@@ -23,31 +29,14 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
                 <Label>Default Commission Rate (%)</Label>
-                <Input type="number" defaultValue={5} />
+                <Input type="number" defaultValue={5} disabled />
+                <p className="text-xs text-gray-500">Global defaults. Override per agent in Agent Portal.</p>
             </div>
             <div className="space-y-2">
                 <Label>Admin Contact Email</Label>
-                <Input type="email" defaultValue="admin@globit.com" />
+                <Input type="email" defaultValue="admin@globit.com" disabled />
             </div>
-            <Button variant="outline">Save Preferences</Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Change Password</CardTitle>
-            <CardDescription>Update your admin account password.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="current">Current Password</Label>
-              <Input id="current" type="password" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="new">New Password</Label>
-              <Input id="new" type="password" />
-            </div>
-            <Button>Update Password</Button>
+            <Button variant="outline" disabled>Save Preferences</Button>
           </CardContent>
         </Card>
       </div>
