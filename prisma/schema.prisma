@@ -53,6 +53,7 @@ model User {
   agentBookings  Booking[] @relation("AgentReferrals")
   commissions    Commission[]
   notifications  Notification[]
+  auditLogs      AuditLog[]
   
   accounts       Account[]
   sessions       Session[]
@@ -148,6 +149,22 @@ model Notification {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+// --- Audit & Security ---
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action     String   // e.g. "UPDATE_UNIT", "APPROVE_BOOKING"
+  entityType String   // e.g. "UNIT", "BOOKING"
+  entityId   String?  // The ID of the item being changed
+  details    String?  // JSON or text description of change
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
 }
 
 // --- RAG Knowledge Base ---
