@@ -1,6 +1,6 @@
 import { signOut } from '@/server/auth'
 import Link from 'next/link'
-import { LayoutDashboard, Calendar, Users, Home, LogOut, Settings } from 'lucide-react'
+import { LayoutDashboard, Calendar, Users, Home, LogOut, Settings, DollarSign } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export default function AdminLayout({
@@ -36,6 +36,11 @@ export default function AdminLayout({
           <Link href="/admin/agents" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-emerald-800 transition-colors text-emerald-200 hover:text-white">
             <Users className="w-5 h-5" />
             <span>Agent Portal</span>
+          </Link>
+
+          <Link href="/admin/claims" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-emerald-800 transition-colors text-emerald-200 hover:text-white">
+            <DollarSign className="w-5 h-5" />
+            <span>Commissions</span>
           </Link>
 
           <Link href="/admin/settings" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-emerald-800 transition-colors text-emerald-200 hover:text-white">
