@@ -7,6 +7,7 @@ import { LayoutDashboard, Calendar, Users, Home, LogOut, Settings, DollarSign, M
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { handleSignOut } from '@/server/actions/auth'
+import { NotificationBell } from '@/components/layout/NotificationBell'
 
 export function AdminSidebar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -24,9 +25,12 @@ export function AdminSidebar() {
 
   const SidebarContent = () => (
     <>
-      <div className="p-4 border-b border-emerald-800 flex items-center gap-2 font-bold text-xl text-white">
-        <span>🌲</span>
-        <span>Globit Admin</span>
+      <div className="p-4 border-b border-emerald-800 flex items-center justify-between">
+        <div className="flex items-center gap-2 font-bold text-xl text-white">
+          <span>🌲</span>
+          <span>Admin</span>
+        </div>
+        <NotificationBell />
       </div>
 
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
@@ -70,11 +74,14 @@ export function AdminSidebar() {
       <div className="md:hidden bg-emerald-900 text-white p-4 flex items-center justify-between sticky top-0 z-30 shadow-md">
         <div className="flex items-center gap-2 font-bold text-lg">
           <span>🌲</span>
-          <span>Globit Admin</span>
+          <span>Admin</span>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => setIsOpen(!isOpen)} className="text-white hover:bg-emerald-800">
-          {isOpen ? <X /> : <Menu />}
-        </Button>
+        <div className="flex items-center gap-2">
+            <NotificationBell />
+            <Button variant="ghost" size="icon" onClick={() => setIsOpen(!isOpen)} className="text-white hover:bg-emerald-800">
+            {isOpen ? <X /> : <Menu />}
+            </Button>
+        </div>
       </div>
 
       {/* Mobile Overlay Sidebar */}

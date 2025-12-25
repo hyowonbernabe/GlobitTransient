@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -51,6 +52,7 @@ model User {
   bookings       Booking[] @relation("ClientBookings")
   agentBookings  Booking[] @relation("AgentReferrals")
   commissions    Commission[]
+  notifications  Notification[]
   
   accounts       Account[]
   sessions       Session[]
@@ -130,6 +132,22 @@ model Commission {
   agent         User      @relation(fields: [agentId], references: [id])
   
   createdAt     DateTime @default(now())
+}
+
+// --- Notification System ---
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("INFO") // INFO, SUCCESS, WARNING, ERROR
+  isRead    Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 // --- RAG Knowledge Base ---
