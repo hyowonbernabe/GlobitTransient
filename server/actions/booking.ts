@@ -3,10 +3,10 @@
 import prisma from "@/lib/prisma"
 import { createBookingSchema } from "@/lib/validations/booking"
 import { calculateBookingPrice } from "@/lib/pricing"
+import { notifyAdmins } from "@/server/actions/notification"
 import { z } from "zod"
 
 export async function createBooking(data: z.infer<typeof createBookingSchema>) {
-  // 1. Validate Input
   const result = createBookingSchema.safeParse(data)
   if (!result.success) {
     return { error: "Invalid form data. Please check your inputs." }
@@ -15,15 +15,12 @@ export async function createBooking(data: z.infer<typeof createBookingSchema>) {
   const { unitId, checkIn, checkOut, guestName, guestMobile, guestEmail, ...rest } = result.data
 
   try {
-    // 2. Availability Check (Server Side)
-    // Check if unit is booked (CONFIRMED or PENDING)
     const conflictingBooking = await prisma.booking.findFirst({
       where: {
         unitId,
         status: { in: ['CONFIRMED', 'PENDING'] },
         OR: [
           { 
-            // Check for overlap
             checkIn: { lte: checkOut }, 
             checkOut: { gte: checkIn } 
           }
@@ -35,7 +32,6 @@ export async function createBooking(data: z.infer<typeof createBookingSchema>) {
       return { error: "Sorry, these dates are no longer available." }
     }
 
-    // 3. Global Car Policy Check
     if (rest.hasCar) {
       const carBooking = await prisma.booking.findFirst({
         where: {
@@ -52,11 +48,9 @@ export async function createBooking(data: z.infer<typeof createBookingSchema>) {
       }
     }
 
-    // 4. Fetch Unit for Pricing
     const unit = await prisma.unit.findUnique({ where: { id: unitId } })
     if (!unit) return { error: "Unit not found." }
 
-    // 5. Recalculate Price (Security)
     const pricing = calculateBookingPrice({
       basePrice: unit.basePrice,
       basePax: unit.basePax,
@@ -68,13 +62,11 @@ export async function createBooking(data: z.infer<typeof createBookingSchema>) {
       hasPWD: rest.hasPWD
     })
 
-    // 6. User Resolution (Implicit Auth)
-    // Find existing user by Mobile (primary) or Email, otherwise create
     let user = await prisma.user.findFirst({
       where: {
         OR: [
           { mobile: guestMobile },
-          { email: guestEmail || undefined } // Only search email if provided
+          { email: guestEmail || undefined } 
         ]
       }
     })
@@ -90,7 +82,6 @@ export async function createBooking(data: z.infer<typeof createBookingSchema>) {
       })
     }
 
-    // 7. Create Booking
     const booking = await prisma.booking.create({
       data: {
         unitId,
@@ -110,6 +101,14 @@ export async function createBooking(data: z.infer<typeof createBookingSchema>) {
         paymentStatus: 'UNPAID'
       }
     })
+
+    // TRIGGER NOTIFICATION
+    await notifyAdmins(
+      "New Reservation",
+      `${guestName} reserved ${unit.name}. Waiting for payment.`,
+      "/admin/bookings",
+      "INFO"
+    )
 
     return { success: true, bookingId: booking.id }
 

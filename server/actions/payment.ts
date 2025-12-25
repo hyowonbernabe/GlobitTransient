@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
-import { redirect } from "next/navigation"
+import { notifyAdmins } from "@/server/actions/notification"
 
 export async function submitPaymentProof(formData: FormData) {
   const bookingId = formData.get("bookingId") as string
@@ -13,16 +13,13 @@ export async function submitPaymentProof(formData: FormData) {
   }
 
   try {
-    // 1. Verify Booking exists and is pending
     const booking = await prisma.booking.findUnique({
-      where: { id: bookingId }
+      where: { id: bookingId },
+      include: { unit: true, user: true }
     })
 
     if (!booking) return { error: "Booking not found" }
 
-    // 2. Update Booking
-    // Note: In a production app, we would have a dedicated 'paymentProof' column.
-    // For now, we append to notes to avoid needing a schema migration immediately.
     const updatedNotes = booking.notes 
       ? `${booking.notes}\n[Payment Submitted] Ref: ${referenceNumber}`
       : `[Payment Submitted] Ref: ${referenceNumber}`
@@ -31,12 +28,17 @@ export async function submitPaymentProof(formData: FormData) {
       where: { id: bookingId },
       data: {
         notes: updatedNotes,
-        // We do NOT change status to CONFIRMED yet. 
-        // Admin must verify the money first.
       }
     })
 
-    // 3. Revalidate and Redirect
+    // TRIGGER NOTIFICATION
+    await notifyAdmins(
+      "Payment Received",
+      `${booking.user.name} submitted proof for ${booking.unit.name}. Ref: ${referenceNumber}`,
+      "/admin/bookings",
+      "WARNING" // Use warning color to grab attention for action needed
+    )
+
     revalidatePath(`/payment/${bookingId}`)
     return { success: true }
 

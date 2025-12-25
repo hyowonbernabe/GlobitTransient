@@ -9,8 +9,6 @@ export async function getNotifications() {
   if (!session?.user?.id) return []
 
   try {
-    // Cast prisma to any to allow access to 'notification' model 
-    // before client regeneration completes
     const notifications = await (prisma as any).notification.findMany({
       where: { userId: session.user.id },
       orderBy: { createdAt: 'desc' },
@@ -42,18 +40,44 @@ export async function markAllAsRead() {
   }
 }
 
-// Internal helper to spawn notifications
-export async function createNotification(userId: string, title: string, message: string, link?: string) {
+// Internal helper: Notify a specific user
+export async function createNotification(userId: string, title: string, message: string, link?: string, type: 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR' = 'INFO') {
   try {
     await (prisma as any).notification.create({
       data: {
         userId,
         title,
         message,
-        link
+        link,
+        type
       }
     })
   } catch (error) {
     console.error("Create Notification Error:", error)
+  }
+}
+
+// Internal helper: Notify ALL Admins
+export async function notifyAdmins(title: string, message: string, link?: string, type: 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR' = 'INFO') {
+  try {
+    const admins = await prisma.user.findMany({
+      where: { role: 'ADMIN' },
+      select: { id: true }
+    })
+
+    if (admins.length === 0) return
+
+    // Create notifications in batch
+    await (prisma as any).notification.createMany({
+      data: admins.map(admin => ({
+        userId: admin.id,
+        title,
+        message,
+        link,
+        type
+      }))
+    })
+  } catch (error) {
+    console.error("Notify Admins Error:", error)
   }
 }
