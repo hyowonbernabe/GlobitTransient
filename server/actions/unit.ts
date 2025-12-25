@@ -12,6 +12,9 @@ export async function updateUnit(unitId: string, formData: FormData) {
   // @ts-ignore
   if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
 
+  // Parse images separately as getAll returns string[]
+  const images = formData.getAll("images").map(i => i.toString()).filter(i => i.length > 0)
+
   const rawData = {
     name: formData.get("name"),
     description: formData.get("description"),
@@ -23,6 +26,7 @@ export async function updateUnit(unitId: string, formData: FormData) {
     hasRef: formData.get("hasRef") === "on",
     hasHeater: formData.get("hasHeater") === "on",
     hasOwnCR: formData.get("hasOwnCR") === "on",
+    images: images, 
   }
 
   const result = unitSchema.safeParse(rawData)
@@ -37,9 +41,19 @@ export async function updateUnit(unitId: string, formData: FormData) {
     await prisma.unit.update({
       where: { id: unitId },
       data: {
-        ...data,
+        name: data.name,
+        description: data.description,
+        basePax: data.basePax,
+        maxPax: data.maxPax,
+        hasTV: data.hasTV,
+        hasRef: data.hasRef,
+        hasHeater: data.hasHeater,
+        hasOwnCR: data.hasOwnCR,
         basePrice: data.basePrice * 100, 
         extraPaxPrice: data.extraPaxPrice * 100,
+        // Only update images if provided, otherwise keep existing? 
+        // No, in this UI we send the full list every time, so we overwrite.
+        images: data.images && data.images.length > 0 ? data.images : undefined
       }
     })
 
@@ -68,6 +82,8 @@ export async function createUnit(formData: FormData) {
   // @ts-ignore
   if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
 
+  const images = formData.getAll("images").map(i => i.toString()).filter(i => i.length > 0)
+
   const rawData = {
     name: formData.get("name"),
     description: formData.get("description"),
@@ -79,6 +95,7 @@ export async function createUnit(formData: FormData) {
     hasRef: formData.get("hasRef") === "on",
     hasHeater: formData.get("hasHeater") === "on",
     hasOwnCR: formData.get("hasOwnCR") === "on",
+    images: images,
   }
 
   const result = unitSchema.safeParse(rawData)
@@ -93,11 +110,18 @@ export async function createUnit(formData: FormData) {
 
     const unit = await prisma.unit.create({
       data: {
-        ...data,
+        name: data.name,
+        description: data.description,
         slug,
+        basePax: data.basePax,
+        maxPax: data.maxPax,
+        hasTV: data.hasTV,
+        hasRef: data.hasRef,
+        hasHeater: data.hasHeater,
+        hasOwnCR: data.hasOwnCR,
         basePrice: data.basePrice * 100,
         extraPaxPrice: data.extraPaxPrice * 100,
-        images: ['/assets/images/placeholder.png'] 
+        images: data.images && data.images.length > 0 ? data.images : ['/assets/images/placeholder.png'] 
       }
     })
 

@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Save, AlertCircle, Loader2 } from 'lucide-react'
+import { Save, AlertCircle, Loader2, Trash2, Plus } from 'lucide-react'
 import { useState } from 'react'
 
 interface UnitData {
@@ -22,28 +22,50 @@ interface UnitData {
   hasRef: boolean
   hasHeater: boolean
   hasOwnCR: boolean
+  images: string[]
 }
 
 export function EditUnitForm({ unit }: { unit: UnitData }) {
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [imageList, setImageList] = useState<string[]>(unit.images.length > 0 ? unit.images : [''])
 
   // Convert centavos back to main currency unit for the input field
   const priceInPeso = unit.basePrice / 100
   const extraPriceInPeso = unit.extraPaxPrice / 100
 
+  const handleAddImage = () => {
+    setImageList([...imageList, ''])
+  }
+
+  const handleRemoveImage = (index: number) => {
+    const newList = [...imageList]
+    newList.splice(index, 1)
+    setImageList(newList)
+  }
+
+  const handleImageChange = (index: number, value: string) => {
+    const newList = [...imageList]
+    newList[index] = value
+    setImageList(newList)
+  }
+
   async function clientAction(formData: FormData) {
     setIsSaving(true)
     setError(null)
     
-    // Call server action
+    // Explicitly append images from state to ensure order and deletions are captured
+    formData.delete('images') // Clear any default form capture
+    imageList.forEach(img => {
+        if (img.trim()) formData.append('images', img.trim())
+    })
+
     const result = await updateUnit(unit.id, formData)
     
     if (result?.error) {
       setError(result.error)
       setIsSaving(false)
     }
-    // On success, the server action redirects, so we don't need to manually reset saving state
   }
 
   return (
@@ -80,6 +102,29 @@ export function EditUnitForm({ unit }: { unit: UnitData }) {
               required 
             />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Images</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+            {imageList.map((url, index) => (
+                <div key={index} className="flex gap-2">
+                    <Input 
+                        placeholder="https://example.com/image.jpg" 
+                        value={url}
+                        onChange={(e) => handleImageChange(index, e.target.value)}
+                    />
+                    <Button type="button" variant="outline" size="icon" onClick={() => handleRemoveImage(index)}>
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                    </Button>
+                </div>
+            ))}
+            <Button type="button" variant="ghost" onClick={handleAddImage} className="text-emerald-600">
+                <Plus className="w-4 h-4 mr-2" /> Add Image URL
+            </Button>
         </CardContent>
       </Card>
 

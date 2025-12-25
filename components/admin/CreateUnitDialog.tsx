@@ -16,17 +16,39 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { AlertCircle, Loader2, Plus } from 'lucide-react'
+import { AlertCircle, Loader2, Plus, Trash2 } from 'lucide-react'
 
 export function CreateUnitDialog() {
   const [open, setOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
+  // Image State
+  const [imageList, setImageList] = useState<string[]>([''])
+
+  const handleAddImage = () => setImageList([...imageList, ''])
+  
+  const handleRemoveImage = (index: number) => {
+    const newList = [...imageList]
+    newList.splice(index, 1)
+    setImageList(newList)
+  }
+
+  const handleImageChange = (index: number, value: string) => {
+    const newList = [...imageList]
+    newList[index] = value
+    setImageList(newList)
+  }
 
   async function handleSubmit(formData: FormData) {
     setIsSaving(true)
     setError(null)
     
+    // Append images
+    imageList.forEach(img => {
+        if (img.trim()) formData.append('images', img.trim())
+    })
+
     const result = await createUnit(formData)
     
     if (result?.error) {
@@ -35,6 +57,8 @@ export function CreateUnitDialog() {
     } else {
       setOpen(false)
       setIsSaving(false)
+      // Reset images
+      setImageList([''])
     }
   }
 
@@ -50,7 +74,7 @@ export function CreateUnitDialog() {
         <DialogHeader>
           <DialogTitle>Add New Unit</DialogTitle>
           <DialogDescription>
-            Create a new room listing. Images will default to placeholders until updated.
+            Create a new room listing.
           </DialogDescription>
         </DialogHeader>
         
@@ -75,6 +99,27 @@ export function CreateUnitDialog() {
               placeholder="Describe the room, view, and features..." 
               className="h-24"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Images (URLs)</Label>
+            {imageList.map((url, index) => (
+                <div key={index} className="flex gap-2 mb-2">
+                    <Input 
+                        placeholder="https://..." 
+                        value={url}
+                        onChange={(e) => handleImageChange(index, e.target.value)}
+                    />
+                    {imageList.length > 1 && (
+                        <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveImage(index)}>
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                        </Button>
+                    )}
+                </div>
+            ))}
+            <Button type="button" variant="ghost" size="sm" onClick={handleAddImage} className="text-emerald-600">
+                <Plus className="w-3 h-3 mr-2" /> Add another
+            </Button>
           </div>
 
           <div className="grid grid-cols-3 gap-4">

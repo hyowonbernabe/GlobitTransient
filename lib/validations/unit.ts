@@ -11,6 +11,8 @@ export const unitSchema = z.object({
   hasRef: z.boolean(),
   hasHeater: z.boolean(),
   hasOwnCR: z.boolean(),
+  // Allow optional array of valid URLs
+  images: z.array(z.string().url("Must be a valid URL")).optional(),
 })
 
 export type UnitFormValues = z.infer<typeof unitSchema>
