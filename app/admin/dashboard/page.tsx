@@ -1,16 +1,16 @@
 import prisma from '@/lib/prisma'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CheckCircle, Clock, DollarSign, Users } from 'lucide-react'
+import { getRevenueData, getOccupancyData } from '@/server/actions/analytics'
+import { AnalyticsCharts } from '@/components/admin/AnalyticsCharts'
 
 export const dynamic = 'force-dynamic'
 
 async function getStats() {
-  // 1. Total Pending Bookings
   const pendingCount = await prisma.booking.count({
     where: { status: 'PENDING' }
   })
 
-  // 2. Confirmed Bookings (Upcoming)
   const confirmedCount = await prisma.booking.count({
     where: { 
       status: 'CONFIRMED',
@@ -18,7 +18,6 @@ async function getStats() {
     }
   })
 
-  // 3. Total Revenue (Confirmed + Completed)
   const revenueData = await prisma.booking.aggregate({
     where: {
       status: { in: ['CONFIRMED', 'COMPLETED'] }
@@ -28,7 +27,6 @@ async function getStats() {
     }
   })
 
-  // 4. Total Guests (Upcoming)
   const guestData = await prisma.booking.aggregate({
     where: {
       status: 'CONFIRMED',
@@ -50,6 +48,8 @@ async function getStats() {
 
 export default async function DashboardPage() {
   const stats = await getStats()
+  const revenueChartData = await getRevenueData()
+  const occupancyChartData = await getOccupancyData()
   
   const formatMoney = (val: number) => 
     new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(val / 100)
@@ -113,13 +113,12 @@ export default async function DashboardPage() {
 
       </div>
       
-      {/* Recent Activity Placeholder - To be implemented next */}
-      <div className="mt-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Bookings</h2>
-        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500">
-          Booking Table Component (Coming Next)
-        </div>
-      </div>
+      {/* Interactive Charts */}
+      <AnalyticsCharts 
+        revenueData={revenueChartData} 
+        occupancyData={occupancyChartData} 
+      />
+      
     </div>
   )
 }
