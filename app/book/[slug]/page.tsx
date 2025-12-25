@@ -4,8 +4,10 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { UnitGallery } from '@/components/booking/UnitGallery'
 import { BookingForm } from '@/components/booking/BookingForm'
+import { ReviewSection } from '@/components/reviews/ReviewSection'
 import { Users, Wind, Tv, Bath, Snowflake } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,16 +15,27 @@ interface PageProps {
   params: Promise<{ slug: string }>
 }
 
-async function getUnit(slug: string) {
-  const unit = await prisma.unit.findUnique({
+async function getUnitWithReviews(slug: string) {
+  // Use temporary any cast until Prisma client is regenerated with new models
+  const unit = await (prisma as any).unit.findUnique({
     where: { slug },
+    include: {
+      reviews: {
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: {
+            select: { name: true }
+          }
+        }
+      }
+    }
   })
   return unit
 }
 
 export default async function UnitPage(props: PageProps) {
   const params = await props.params;
-  const unit = await getUnit(params.slug)
+  const unit = await getUnitWithReviews(params.slug)
 
   if (!unit) {
     return notFound()
@@ -35,12 +48,10 @@ export default async function UnitPage(props: PageProps) {
       <main className="flex-1 pb-20">
         <div className="container mx-auto px-4 py-8">
           
-          {/* Main Layout - Flex Column on Mobile, Grid on Desktop */}
           <div className="flex flex-col lg:grid lg:grid-cols-3 gap-8 items-start">
             
-            {/* 1. Header & Gallery (Top on Mobile, Left on Desktop) */}
+            {/* Header & Gallery */}
             <div className="w-full order-1 lg:col-span-2 space-y-8">
-              
               <div className="space-y-4">
                 <h1 className="text-3xl md:text-4xl font-bold text-emerald-950">{unit.name}</h1>
                 <div className="flex flex-wrap gap-2 text-sm text-gray-600">
@@ -61,12 +72,11 @@ export default async function UnitPage(props: PageProps) {
                 </div>
               </div>
 
-              {/* Gallery */}
               <UnitGallery images={unit.images} unitName={unit.name} />
             </div>
 
-            {/* 2. Booking Form (Middle on Mobile, Right Sidebar on Desktop) */}
-            <div className="w-full order-2 lg:order-2 lg:col-span-1 lg:col-start-3 lg:row-start-1 lg:row-span-2">
+            {/* Booking Form (Sticky Sidebar on Desktop) */}
+            <div className="w-full order-2 lg:order-2 lg:col-span-1 lg:col-start-3 lg:row-start-1 lg:row-span-3">
                <BookingForm 
                  pricing={{
                    id: unit.id,
@@ -79,8 +89,9 @@ export default async function UnitPage(props: PageProps) {
                />
             </div>
 
-            {/* 3. Description & Details (Bottom on Mobile, Left Bottom on Desktop) */}
-            <div className="w-full order-3 lg:order-3 lg:col-span-2 space-y-8">
+            {/* Details & Reviews */}
+            <div className="w-full order-3 lg:order-3 lg:col-span-2 space-y-12">
+              
               {/* Description */}
               <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm space-y-6">
                 <div>
@@ -109,16 +120,22 @@ export default async function UnitPage(props: PageProps) {
                 </div>
               </div>
 
-              {/* House Rules Brief */}
+              {/* Rules */}
               <div className="bg-yellow-50 p-6 rounded-xl border border-yellow-100 space-y-3">
                  <h3 className="font-bold text-yellow-900">Important Reminders</h3>
                  <ul className="text-sm text-yellow-800 space-y-2 list-disc list-inside">
                    <li>Check-in: 2:00 PM | Check-out: 12:00 PM</li>
                    <li>Quiet hours start at 10:00 PM</li>
                    <li>Clean as you go policy</li>
-                   <li>Toiletries (towel, soap, shampoo) are NOT provided. Please bring your own.</li>
+                   <li>Toiletries (towel, soap, shampoo) are NOT provided.</li>
                  </ul>
               </div>
+
+              <Separator />
+
+              {/* Reviews */}
+              <ReviewSection unitId={unit.id} reviews={unit.reviews} />
+
             </div>
 
           </div>

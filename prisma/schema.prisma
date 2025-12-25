@@ -54,6 +54,7 @@ model User {
   commissions    Commission[]
   notifications  Notification[]
   auditLogs      AuditLog[]
+  reviews        Review[]
   
   accounts       Account[]
   sessions       Session[]
@@ -81,6 +82,7 @@ model Unit {
   hasOwnCR       Boolean @default(true)
   
   bookings       Booking[]
+  reviews        Review[]
 }
 
 model Booking {
@@ -167,15 +169,22 @@ model AuditLog {
   @@index([action])
 }
 
-// --- RAG Knowledge Base ---
+// --- Reviews ---
 
-model KnowledgeSnippet {
-  id        String    @id @default(cuid())
-  content   String    
-  category  String    
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int      // 1-5
+  comment   String?  @db.Text
+  
+  unitId    String
+  unit      Unit     @relation(fields: [unitId], references: [id])
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  
+  @@index([unitId])
 }
 
 // --- NextAuth Models ---
