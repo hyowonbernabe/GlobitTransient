@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, LogOut, Wallet, Link as LinkIcon, Menu, X, HandCoins } from 'lucide-react'
+import { LayoutDashboard, LogOut, Wallet, Link as LinkIcon, Menu, X, HandCoins, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { handleSignOut } from '@/server/actions/auth'
@@ -15,6 +15,7 @@ export function AgentSidebar() {
 
   const links = [
     { href: '/portal/dashboard', label: 'Overview', icon: LayoutDashboard },
+    { href: '/portal/calendar', label: 'Calendar', icon: Calendar },
     { href: '/portal/bookings', label: 'My Bookings', icon: Wallet },
     { href: '/portal/claims', label: 'Manual Claims', icon: HandCoins },
     { href: '/portal/tools', label: 'Referral Tools', icon: LinkIcon },
@@ -73,7 +74,6 @@ export function AgentSidebar() {
           <span>Portal</span>
         </div>
         <div className="flex items-center gap-2">
-            {/* Dark colored bell for white header on mobile */}
             <div className="bg-emerald-900 rounded-full w-8 h-8 flex items-center justify-center">
                 <NotificationBell />
             </div>
@@ -92,15 +92,6 @@ export function AgentSidebar() {
 
       {/* Desktop Sidebar (Static) */}
       <aside className="hidden md:flex bg-white border-r border-gray-200 w-64 flex-col h-screen sticky top-0 shrink-0 relative">
-        {/* We place the notification bell in the sidebar for desktop or separate header?
-            Typically sidebars don't have bells. We can put it in the header part of the sidebar content or at the top.
-            Let's add it to the header of the sidebar for now to keep layout simple. 
-        */}
-        <div className="absolute top-4 right-4 md:hidden"> 
-            {/* Hidden on desktop here because the design usually has a top bar. 
-                But since we don't have a top bar on desktop, we'll embed it in the sidebar header.
-            */}
-        </div>
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
             <div className="flex items-center gap-2 font-bold text-xl text-emerald-800">
             <span>💼</span>
