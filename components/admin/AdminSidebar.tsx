@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Calendar, Users, Home, LogOut, Settings, DollarSign, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Calendar, Users, Home, LogOut, Settings, DollarSign, Menu, X, BookOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { handleSignOut } from '@/server/actions/auth'
@@ -14,6 +14,7 @@ export function AdminSidebar() {
 
   const links = [
     { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/admin/bookings', label: 'Bookings', icon: BookOpen },
     { href: '/admin/calendar', label: 'Calendar', icon: Calendar },
     { href: '/admin/units', label: 'Unit Management', icon: Home },
     { href: '/admin/agents', label: 'Agent Portal', icon: Users },
