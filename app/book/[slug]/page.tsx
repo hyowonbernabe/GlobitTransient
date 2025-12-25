@@ -4,7 +4,7 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { UnitGallery } from '@/components/booking/UnitGallery'
 import { BookingForm } from '@/components/booking/BookingForm'
-import { Users, Wind, Tv, CheckCircle, Bath, Snowflake } from 'lucide-react'
+import { Users, Wind, Tv, Bath, Snowflake } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 export const dynamic = 'force-dynamic'
@@ -35,12 +35,11 @@ export default async function UnitPage(props: PageProps) {
       <main className="flex-1 pb-20">
         <div className="container mx-auto px-4 py-8">
           
-          {/* Breadcrumb / Back Navigation can go here */}
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+          {/* Main Layout - Flex Column on Mobile, Grid on Desktop */}
+          <div className="flex flex-col lg:grid lg:grid-cols-3 gap-8 items-start">
             
-            {/* Left Column: Gallery & Details */}
-            <div className="lg:col-span-2 space-y-8">
+            {/* 1. Header & Gallery (Top on Mobile, Left on Desktop) */}
+            <div className="w-full order-1 lg:col-span-2 space-y-8">
               
               <div className="space-y-4">
                 <h1 className="text-3xl md:text-4xl font-bold text-emerald-950">{unit.name}</h1>
@@ -64,7 +63,24 @@ export default async function UnitPage(props: PageProps) {
 
               {/* Gallery */}
               <UnitGallery images={unit.images} unitName={unit.name} />
+            </div>
 
+            {/* 2. Booking Form (Middle on Mobile, Right Sidebar on Desktop) */}
+            <div className="w-full order-2 lg:order-2 lg:col-span-1 lg:col-start-3 lg:row-start-1 lg:row-span-2">
+               <BookingForm 
+                 pricing={{
+                   id: unit.id,
+                   basePrice: unit.basePrice,
+                   basePax: unit.basePax,
+                   extraPaxPrice: unit.extraPaxPrice,
+                   maxPax: unit.maxPax,
+                   hasCarConfig: true
+                 }}
+               />
+            </div>
+
+            {/* 3. Description & Details (Bottom on Mobile, Left Bottom on Desktop) */}
+            <div className="w-full order-3 lg:order-3 lg:col-span-2 space-y-8">
               {/* Description */}
               <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm space-y-6">
                 <div>
@@ -103,19 +119,6 @@ export default async function UnitPage(props: PageProps) {
                    <li>Toiletries (towel, soap, shampoo) are NOT provided. Please bring your own.</li>
                  </ul>
               </div>
-            </div>
-
-            {/* Right Column: Booking Form */}
-            <div className="lg:col-span-1">
-               <BookingForm 
-                 pricing={{
-                   basePrice: unit.basePrice,
-                   basePax: unit.basePax,
-                   extraPaxPrice: unit.extraPaxPrice,
-                   maxPax: unit.maxPax,
-                   hasCarConfig: true
-                 }}
-               />
             </div>
 
           </div>
