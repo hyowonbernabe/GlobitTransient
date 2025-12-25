@@ -10,7 +10,9 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from '@/components/ui/badge'
-import { Edit, Plus } from 'lucide-react'
+import { Edit, Trash2 } from 'lucide-react'
+import { deleteUnit } from '@/server/actions/unit'
+import { CreateUnitDialog } from '@/components/admin/CreateUnitDialog'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,11 +35,7 @@ export default async function UnitsPage() {
           <h1 className="text-3xl font-bold text-gray-900">Unit Management</h1>
           <p className="text-gray-500">Manage your rooms, pricing, and amenities.</p>
         </div>
-        {/* Placeholder for Create Unit - focused on editing seed data for now */}
-        <Button disabled variant="outline">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Unit
-        </Button>
+        <CreateUnitDialog />
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
@@ -77,11 +75,21 @@ export default async function UnitsPage() {
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
-                  <Link href={`/admin/units/${unit.id}`}>
-                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                      <Edit className="w-4 h-4 text-gray-600" />
-                    </Button>
-                  </Link>
+                  <div className="flex justify-end gap-2">
+                    <Link href={`/admin/units/${unit.id}`}>
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                        <Edit className="w-4 h-4 text-gray-600" />
+                        </Button>
+                    </Link>
+                    <form action={async () => {
+                        'use server'
+                        await deleteUnit(unit.id)
+                    }}>
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:text-red-600 hover:bg-red-50">
+                            <Trash2 className="w-4 h-4" />
+                        </Button>
+                    </form>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
