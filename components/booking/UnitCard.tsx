@@ -42,18 +42,18 @@ export function UnitCard({ unit, isFeatured = false }: UnitCardProps) {
       {/* Image Section */}
       <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden group">
         {unit.images.length > 0 ? (
-           // Placeholder logic for now, using unit name to differentiate
-           <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
-             <img 
-               src="/assets/images/placeholder.png" 
-               alt={unit.name} 
-               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-             />
-           </div>
+          // Placeholder logic for now, using unit name to differentiate
+          <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
+            <img
+              src={unit.slug === 'big-house' ? '/assets/images/baguio_midground.png' : unit.slug === 'veranda-unit' ? '/assets/images/baguio_background_fog.png' : '/assets/images/placeholder.png'}
+              alt={unit.name}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          </div>
         ) : (
           <div className="w-full h-full bg-gray-200" />
         )}
-        
+
         <div className="absolute top-3 right-3">
           <Badge variant="secondary" className="bg-white/95 backdrop-blur text-emerald-800 font-bold shadow-sm">
             {formattedPrice} <span className="font-normal text-gray-500 ml-1">/ night</span>
@@ -87,7 +87,7 @@ export function UnitCard({ unit, isFeatured = false }: UnitCardProps) {
         <p className="text-sm text-gray-600 line-clamp-2">
           {unit.description}
         </p>
-        
+
         <div className="flex flex-wrap gap-2">
           {unit.hasOwnCR && (
             <Badge variant="outline" className="text-xs font-normal text-gray-600 bg-gray-50">
@@ -109,9 +109,9 @@ export function UnitCard({ unit, isFeatured = false }: UnitCardProps) {
 
       <CardFooter className="pt-2 pb-6 border-t border-gray-50 mt-auto bg-gray-50/50">
         <Link href={`/book/${unit.slug}`} className="w-full">
-          <Button 
+          <Button
             className={cn(
-              "w-full font-semibold", 
+              "w-full font-semibold",
               isFeatured ? "bg-emerald-600 hover:bg-emerald-700" : "bg-white text-emerald-700 border-2 border-emerald-600 hover:bg-emerald-50"
             )}
             variant={isFeatured ? "default" : "outline"}
