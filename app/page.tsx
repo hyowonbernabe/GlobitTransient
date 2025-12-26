@@ -5,6 +5,7 @@ import { FeaturedUnits } from '@/components/landing/FeaturedUnits'
 import { LocationMap } from '@/components/landing/LocationMap'
 import { FAQSection } from '@/components/landing/FAQSection'
 import { ContactSection } from '@/components/landing/ContactSection'
+import { StickyCTA } from '@/components/landing/StickyCTA'
 import prisma from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
@@ -39,6 +40,7 @@ export default async function Home() {
             </main>
 
             <Footer />
+            <StickyCTA />
         </div>
     )
 }
