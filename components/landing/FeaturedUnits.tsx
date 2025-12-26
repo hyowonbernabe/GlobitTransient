@@ -138,7 +138,7 @@ function DesktopUnitPeak({ unit, index, isHovered, isOtherHovered, onHover, onLe
                                 </div>
                                 <div className="flex items-center gap-6 pt-4">
                                     <Link href={`/book/${unit.slug}`}>
-                                        <Button className="bg-white hover:bg-emerald-100 text-emerald-950 font-black rounded-2xl px-12 py-8 text-xl">
+                                        <Button className="bg-emerald-950 hover:bg-emerald-900 text-white font-black rounded-[2rem] px-12 py-8 text-xl border-b-4 border-emerald-800 transition-all hover:-translate-y-1 active:translate-y-0.5 active:border-b-0 shadow-2xl shadow-emerald-900/40">
                                             Check Availability
                                         </Button>
                                     </Link>
@@ -275,7 +275,7 @@ function MobileUnitPortal({ unit, index }: { unit: Unit, index: number }) {
 
                                 <div className="flex items-center gap-3">
                                     <Link href={`/book/${unit.slug}`} className="flex-1">
-                                        <Button className="w-full bg-white text-emerald-950 font-black rounded-xl py-6 text-base">
+                                        <Button className="w-full bg-emerald-950 text-white font-black rounded-2xl py-7 text-base border-b-4 border-emerald-800 transition-all active:translate-y-0.5 active:border-b-0 shadow-lg shadow-emerald-900/40">
                                             Discover Unit
                                         </Button>
                                     </Link>

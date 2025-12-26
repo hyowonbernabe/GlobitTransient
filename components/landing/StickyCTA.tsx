@@ -38,7 +38,7 @@ export function StickyCTA() {
                     <Link href="/book">
                         <Button
                             size="icon"
-                            className="group relative h-14 w-14 rounded-full bg-emerald-950 hover:bg-emerald-900 text-white shadow-2xl shadow-emerald-900/40 border-b-4 border-emerald-800 transition-all hover:-translate-y-1 active:translate-y-0 active:border-b-0"
+                            className="group relative h-14 w-14 rounded-full bg-emerald-950 hover:bg-emerald-900 text-white shadow-2xl shadow-emerald-900/40 border-b-4 border-emerald-800 transition-all hover:-translate-y-1 active:translate-y-0.5 active:border-b-0"
                         >
                             <div className="flex items-center justify-center">
                                 <CalendarDays className="w-6 h-6 group-hover:rotate-12 transition-transform" />

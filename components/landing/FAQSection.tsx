@@ -109,7 +109,7 @@ export function FAQSection() {
                     </div>
                     <Button
                         onClick={() => window.dispatchEvent(new CustomEvent('open-chat'))}
-                        className="bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-black rounded-2xl px-10 py-6 text-lg"
+                        className="bg-emerald-400 hover:bg-emerald-300 text-emerald-950 font-black rounded-full px-10 py-8 text-xl border-b-4 border-emerald-500 transition-all hover:-translate-y-1 active:translate-y-0.5 active:border-b-0 shadow-2xl shadow-emerald-400/20"
                     >
                         Ask our AI Assistant
                     </Button>

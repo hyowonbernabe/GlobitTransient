@@ -238,8 +238,8 @@ export function ChatWidget() {
                     className={cn(
                         "group relative h-14 w-14 rounded-full shadow-2xl transition-all duration-300",
                         isOpen
-                            ? "bg-red-500 hover:bg-red-600 border-b-4 border-red-700"
-                            : "bg-emerald-950 hover:bg-emerald-900 border-b-4 border-emerald-800 hover:-translate-y-1 active:translate-y-0 active:border-b-0"
+                            ? "bg-red-500 hover:bg-red-600 border-b-4 border-red-700 active:translate-y-0.5 active:border-b-0"
+                            : "bg-emerald-950 hover:bg-emerald-900 border-b-4 border-emerald-800 hover:-translate-y-1 active:translate-y-0.5 active:border-b-0"
                     )}
                     onClick={() => setIsOpen(!isOpen)}
                 >
@@ -264,6 +264,6 @@ export function ChatWidget() {
                     )}
                 </Button>
             </motion.div>
-        </div>
+        </div >
     )
 }

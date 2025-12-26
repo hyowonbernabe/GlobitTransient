@@ -95,13 +95,13 @@ export function Hero() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-6">
             <Link href="/book" className="w-full sm:w-auto group">
-              <Button size="lg" className="w-full h-16 md:h-20 px-12 text-2xl font-black shadow-2xl shadow-emerald-950/50 bg-emerald-600 hover:bg-emerald-500 rounded-2xl border-b-8 border-emerald-800 active:border-b-0 transition-all">
+              <Button size="lg" className="w-full h-16 md:h-20 px-12 text-2xl font-black bg-emerald-950 hover:bg-emerald-900 text-white rounded-[2rem] border-b-4 border-emerald-800 transition-all hover:-translate-y-1 active:translate-y-0.5 active:border-b-0 shadow-2xl shadow-emerald-900/40">
                 {t('hero.cta_book')}
                 <ArrowRight className="ml-2 w-8 h-8 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
             <Link href="#location" className="w-full sm:w-auto">
-              <Button variant="secondary" size="lg" className="w-full h-16 md:h-20 px-12 text-2xl font-black bg-white/10 text-white border-2 border-white/20 hover:bg-white/20 backdrop-blur-2xl rounded-2xl transition-all">
+              <Button variant="secondary" size="lg" className="w-full h-16 md:h-20 px-12 text-2xl font-black bg-white border-2 border-emerald-950/10 text-emerald-950 hover:bg-emerald-50 rounded-[2rem] transition-all hover:-translate-y-1 active:translate-y-0.5 shadow-xl shadow-emerald-900/5">
                 {t('hero.cta_location')}
               </Button>
             </Link>
