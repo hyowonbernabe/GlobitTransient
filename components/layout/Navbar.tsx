@@ -73,7 +73,7 @@ export function Navbar() {
               {[
                 { href: '/', label: t('nav.home'), icon: Home },
                 { href: '/#location', label: t('nav.location'), icon: MapPin },
-                { href: '/faq', label: t('nav.faq'), icon: HelpCircle },
+                { href: '/#faq', label: t('nav.faq'), icon: HelpCircle },
               ].map((link) => {
                 const isActive = pathname === link.href || (link.href === '/#location' && pathname === '/')
                 return (
@@ -202,7 +202,7 @@ export function Navbar() {
                 { href: '/book', label: t('nav.book'), icon: CalendarDays },
                 { href: '/track', label: t('nav.track'), icon: Search },
                 { href: '/#location', label: t('nav.location'), icon: MapPin },
-                { href: '/faq', label: t('nav.faq'), icon: HelpCircle },
+                { href: '/#faq', label: t('nav.faq'), icon: HelpCircle },
               ].map((link, i) => (
                 <MotionLink
                   key={link.href}

@@ -3,6 +3,7 @@ import { Footer } from '@/components/layout/Footer'
 import { Hero } from '@/components/landing/Hero'
 import { FeaturedUnits } from '@/components/landing/FeaturedUnits'
 import { LocationMap } from '@/components/landing/LocationMap'
+import { FAQSection } from '@/components/landing/FAQSection'
 import { ContactSection } from '@/components/landing/ContactSection'
 import prisma from '@/lib/prisma'
 
@@ -33,6 +34,7 @@ export default async function Home() {
         <Hero />
         <FeaturedUnits units={units} />
         <LocationMap />
+        <FAQSection />
         <ContactSection />
       </main>
 
