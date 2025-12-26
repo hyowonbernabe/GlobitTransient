@@ -15,8 +15,21 @@ import { deleteAgent } from '@/server/actions/agent'
 
 export const dynamic = 'force-dynamic'
 
+// Define explicit type for the agent data structure to fix 'any' type error
+interface AgentData {
+  id: string
+  name: string | null
+  email: string | null
+  mobile: string | null
+  commissionRate: number
+  agentCode: string | null
+  _count: {
+    agentBookings: number
+  }
+}
+
 async function getAgents() {
-  return await prisma.user.findMany({
+  const agents = await prisma.user.findMany({
     where: { role: 'AGENT' },
     orderBy: { createdAt: 'desc' },
     include: {
@@ -25,6 +38,8 @@ async function getAgents() {
         }
     }
   })
+  // Cast to ensure type safety in the component
+  return agents as unknown as AgentData[]
 }
 
 export default async function AgentsPage() {
