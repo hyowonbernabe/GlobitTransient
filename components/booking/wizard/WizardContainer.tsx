@@ -20,6 +20,19 @@ interface WizardContainerProps {
 
 type WizardStep = "pax" | "dates" | "results"
 
+// Ranking configuration based on provided requirements
+const RANKING_ORDER = [
+    'big-house',      // Rank 1
+    'veranda-unit',   // Rank 2
+    'unit-3',         // Rank 3
+    'unit-6',
+    'unit-7',
+    'unit-10',        // Rank 4 & 5
+    'double-deck-1',  // Rank 6
+    'double-deck-2',
+    'double-deck-3'
+];
+
 export function WizardContainer({ initialUnits }: WizardContainerProps) {
   const [step, setStep] = useState<WizardStep>("pax")
   
@@ -77,23 +90,40 @@ export function WizardContainer({ initialUnits }: WizardContainerProps) {
   }
 
   const handleFindStay = () => {
+    // In a real app, you would filter by availability here.
     const sorted = sortUnits(initialUnits);
     setFilteredUnits(sorted)
     setStep("results")
   }
 
-  // Helper: Prioritize "Big House" and "Veranda"
+  // Updated Sorting Logic
   const sortUnits = (units: Unit[]) => {
     return [...units].sort((a, b) => {
-        const isAPremium = ['big-house', 'veranda-unit'].includes(a.slug);
-        const isBPremium = ['big-house', 'veranda-unit'].includes(b.slug);
-        return (isAPremium === isBPremium) ? 0 : isAPremium ? -1 : 1;
+        const indexA = RANKING_ORDER.indexOf(a.slug);
+        const indexB = RANKING_ORDER.indexOf(b.slug);
+        
+        // If both are in the ranking list, sort by index
+        if (indexA !== -1 && indexB !== -1) {
+            return indexA - indexB;
+        }
+        
+        // If only A is in list, it comes first
+        if (indexA !== -1) return -1;
+        
+        // If only B is in list, it comes first
+        if (indexB !== -1) return 1;
+        
+        // Fallback: Sort by price if neither is in the explicit ranking list
+        return b.basePrice - a.basePrice; 
     });
   }
 
   // --- RENDER: RESULTS VIEW ---
   if (step === "results") {
+    // Separate Featured (Rank 1 & 2) from Standard (Rank 3+)
     const topPicks = filteredUnits.filter(u => ['big-house', 'veranda-unit'].includes(u.slug))
+    
+    // The "Rest" includes everything else, still sorted by rank
     const others = filteredUnits.filter(u => !['big-house', 'veranda-unit'].includes(u.slug))
 
     return (
@@ -146,7 +176,7 @@ export function WizardContainer({ initialUnits }: WizardContainerProps) {
             initial={{ opacity: 0, scale: 0.95, filter: "blur(10px)" }}
             animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
             exit={{ opacity: 0, x: -20, filter: "blur(5px)" }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }} // Custom ease
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }} 
           >
             <PaxInput 
                 value={pax} 
