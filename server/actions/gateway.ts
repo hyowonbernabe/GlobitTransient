@@ -39,8 +39,11 @@ export async function initiateCheckout(bookingId: string) {
       return { error: "Slot taken by another user." }
     }
 
-    const baseUrl = process.env.AUTH_URL || "http://localhost:3000"
-    
+    // Use AUTH_URL but fallback to Vercel's automatic URL if available
+    const baseUrl = process.env.AUTH_URL && !process.env.AUTH_URL.includes('localhost')
+      ? process.env.AUTH_URL
+      : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+
     const validImages = booking.unit.images.filter(img => img.startsWith('http') || img.startsWith('https'))
 
     const payload = {
@@ -49,7 +52,7 @@ export async function initiateCheckout(bookingId: string) {
           line_items: [
             {
               currency: 'PHP',
-              amount: booking.downpayment, 
+              amount: booking.downpayment,
               description: `Downpayment for ${booking.unit.name}`,
               name: 'Booking Downpayment',
               quantity: 1,
@@ -91,8 +94,8 @@ export async function initiateCheckout(bookingId: string) {
     }
 
     await prisma.booking.update({
-        where: { id: booking.id },
-        data: { checkoutSessionId: data.data.id }
+      where: { id: booking.id },
+      data: { checkoutSessionId: data.data.id }
     })
 
     return { success: true, url: data.data.attributes.checkout_url }
@@ -106,7 +109,7 @@ export async function initiateCheckout(bookingId: string) {
 export async function checkPaymentStatus(bookingId: string) {
   try {
     const booking = await prisma.booking.findUnique({
-        where: { id: bookingId }
+      where: { id: bookingId }
     })
 
     if (!booking) return { status: 'error', message: 'Booking not found' }
@@ -117,14 +120,14 @@ export async function checkPaymentStatus(bookingId: string) {
       headers: { 'Authorization': getAuthHeader() },
       cache: 'no-store'
     })
-    
+
     const data = await response.json()
-    const paymentStatus = data.data?.attributes?.payment_status 
+    const paymentStatus = data.data?.attributes?.payment_status
 
     if (paymentStatus === 'paid') {
-       await confirmBooking(bookingId, `[PayMongo] Paid via Session ${booking.checkoutSessionId}`)
-       revalidatePath(`/payment/${bookingId}`)
-       return { status: 'confirmed' }
+      await confirmBooking(bookingId, `[PayMongo] Paid via Session ${booking.checkoutSessionId}`)
+      revalidatePath(`/payment/${bookingId}`)
+      return { status: 'confirmed' }
     }
 
     return { status: 'pending' }
@@ -137,16 +140,16 @@ export async function checkPaymentStatus(bookingId: string) {
 
 export async function verifyTransaction(sessionId: string, bookingId: string) {
   try {
-    const booking = await prisma.booking.findUnique({ where: { id: bookingId }})
+    const booking = await prisma.booking.findUnique({ where: { id: bookingId } })
     if (booking?.status === 'CONFIRMED') return { success: true }
 
     const response = await fetch(`https://api.paymongo.com/v1/checkout_sessions/${sessionId}`, {
       headers: { 'Authorization': getAuthHeader() },
       cache: 'no-store'
     })
-    
+
     const data = await response.json()
-    const paymentStatus = data.data?.attributes?.payment_status 
+    const paymentStatus = data.data?.attributes?.payment_status
 
     if (paymentStatus === 'paid') {
       await confirmBooking(bookingId, `[PayMongo] Paid via Session ${sessionId}`)
@@ -163,5 +166,5 @@ export async function verifyTransaction(sessionId: string, bookingId: string) {
 }
 
 export async function finalizePayment(bookingId: string, paymentMethod: string) {
-    return { success: true } 
+  return { success: true }
 }
