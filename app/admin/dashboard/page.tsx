@@ -7,6 +7,15 @@ import { RecentBookings } from '@/components/admin/RecentBookings'
 
 export const dynamic = 'force-dynamic'
 
+interface RecentBooking {
+  id: string
+  totalPrice: number
+  status: string
+  createdAt: Date
+  unit: { name: string }
+  user: { name: string | null }
+}
+
 async function getDashboardData() {
   const pendingCount = await prisma.booking.count({
     where: { status: 'PENDING' }
@@ -40,7 +49,7 @@ async function getDashboardData() {
   })
 
   // Fetch Recent Bookings
-  const recentBookings = await prisma.booking.findMany({
+  const recentBookingsRaw = await prisma.booking.findMany({
     take: 5,
     orderBy: { createdAt: 'desc' },
     select: {
@@ -57,8 +66,11 @@ async function getDashboardData() {
     }
   })
 
+  // Explicit cast to fix implicit any error
+  const recentBookings = recentBookingsRaw as unknown as RecentBooking[]
+
   // Format bookings for the component
-  const formattedBookings = recentBookings.map(b => ({
+  const formattedBookings = recentBookings.map((b) => ({
     id: b.id,
     guestName: b.user.name,
     unitName: b.unit.name,

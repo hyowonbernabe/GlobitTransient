@@ -16,10 +16,24 @@ import { CreateUnitDialog } from '@/components/admin/CreateUnitDialog'
 
 export const dynamic = 'force-dynamic'
 
+interface UnitData {
+  id: string
+  name: string
+  basePrice: number
+  basePax: number
+  maxPax: number
+  hasOwnCR: boolean
+  hasTV: boolean
+  hasHeater: boolean
+  hasRef: boolean
+}
+
 async function getUnits() {
-  return await prisma.unit.findMany({
+  const units = await prisma.unit.findMany({
     orderBy: { name: 'asc' }
   })
+  // Explicitly cast to ensure type safety in map
+  return units as unknown as UnitData[]
 }
 
 export default async function UnitsPage() {
@@ -72,6 +86,7 @@ export default async function UnitsPage() {
                     {unit.hasOwnCR && <Badge variant="secondary" className="text-[10px]">CR</Badge>}
                     {unit.hasTV && <Badge variant="secondary" className="text-[10px]">TV</Badge>}
                     {unit.hasHeater && <Badge variant="secondary" className="text-[10px]">Heater</Badge>}
+                    {unit.hasRef && <Badge variant="secondary" className="text-[10px]">Ref</Badge>}
                   </div>
                 </TableCell>
                 <TableCell className="text-right">

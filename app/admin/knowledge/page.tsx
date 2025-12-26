@@ -10,11 +10,18 @@ import { createSnippet, deleteSnippet } from "@/server/actions/knowledge"
 
 export const dynamic = 'force-dynamic'
 
+interface KnowledgeSnippetData {
+  id: string
+  category: string
+  content: string
+}
+
 async function getSnippets() {
   try {
-    return await (prisma as any).knowledgeSnippet.findMany({
+    const snippets = await (prisma as any).knowledgeSnippet.findMany({
       orderBy: { createdAt: 'desc' }
     })
+    return snippets as unknown as KnowledgeSnippetData[]
   } catch (e) {
     return []
   }
@@ -91,7 +98,7 @@ export default async function KnowledgePage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {snippets.map((item: any) => (
+                {snippets.map((item) => (
                   <div key={item.id} className="flex items-start justify-between p-4 rounded-lg border border-gray-100 bg-gray-50 hover:bg-white hover:shadow-sm transition-all">
                     <div className="space-y-1">
                       <Badge variant="outline" className="bg-white mb-1">
