@@ -8,6 +8,7 @@ export async function confirmBooking(bookingId: string, notesPrefix: string) {
         include: { unit: true, user: true }
     })
 
+    console.log(`🔄 [Service] confirmBooking triggered for ID: ${bookingId}`)
     if (booking && booking.status !== 'CONFIRMED') {
         await prisma.booking.update({
             where: { id: bookingId },
@@ -17,12 +18,13 @@ export async function confirmBooking(bookingId: string, notesPrefix: string) {
                 notes: booking.notes ? `${booking.notes}\n${notesPrefix}` : notesPrefix
             }
         })
+        console.log(`✅ [Service] Booking ${bookingId} updated to CONFIRMED in DB`)
 
         if (booking.agentId) {
-            const agent = await prisma.user.findUnique({ where: { id: booking.agentId }})
+            const agent = await prisma.user.findUnique({ where: { id: booking.agentId } })
             if (agent) {
                 const commissionAmount = Math.round(booking.totalPrice * agent.commissionRate)
-                
+
                 // Create commission if not exists (idempotency check ideal but skipped for brevity)
                 await prisma.commission.create({
                     data: {
@@ -32,7 +34,7 @@ export async function confirmBooking(bookingId: string, notesPrefix: string) {
                         agentId: agent.id
                     }
                 })
-                
+
                 await createNotification(
                     agent.id,
                     "New Commission",

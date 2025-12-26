@@ -122,7 +122,10 @@ export async function checkPaymentStatus(bookingId: string) {
     })
 
     const data = await response.json()
+    console.log(`🔍 [Manual Check] Session Info for ${booking.checkoutSessionId}:`, JSON.stringify(data, null, 2))
+
     const paymentStatus = data.data?.attributes?.payment_status
+    console.log(`💳 [Manual Check] Payment Status: ${paymentStatus}`)
 
     if (paymentStatus === 'paid') {
       await confirmBooking(bookingId, `[PayMongo] Paid via Session ${booking.checkoutSessionId}`)
@@ -149,7 +152,10 @@ export async function verifyTransaction(sessionId: string, bookingId: string) {
     })
 
     const data = await response.json()
+    console.log(`🔍 [Verify] Session Info for ${sessionId}:`, JSON.stringify(data, null, 2))
+
     const paymentStatus = data.data?.attributes?.payment_status
+    console.log(`💳 [Verify] Payment Status: ${paymentStatus}`)
 
     if (paymentStatus === 'paid') {
       await confirmBooking(bookingId, `[PayMongo] Paid via Session ${sessionId}`)
