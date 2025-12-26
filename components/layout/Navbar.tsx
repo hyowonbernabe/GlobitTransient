@@ -45,8 +45,8 @@ export function Navbar() {
             "mx-auto flex items-center justify-between transition-all duration-500 pointer-events-auto shadow-sm",
             "md:h-20 h-16 px-6 md:px-10 rounded-[2.5rem] border",
             scrolled
-              ? "bg-white/80 backdrop-blur-xl border-white/40 shadow-xl shadow-emerald-900/5 mt-0 max-w-7xl"
-              : "bg-white/40 backdrop-blur-md border-white/20 mt-2 max-w-full"
+              ? "bg-white border-emerald-900/10 mt-0 max-w-7xl"
+              : "bg-white border-emerald-900/5 mt-2 max-w-full"
           )}
         >
           {/* Brand */}
@@ -74,7 +74,7 @@ export function Navbar() {
                 { href: '/', label: t('nav.home'), icon: Home },
                 { href: '/#location', label: t('nav.location'), icon: MapPin },
                 { href: '/#faq', label: t('nav.faq'), icon: HelpCircle },
-                { href: '/#contact', label: t('nav.contact') || 'Contact', icon: MessageCircle },
+                { href: '/#contact', label: t('nav.contact'), icon: MessageCircle },
               ].map((link) => {
                 const isActive = pathname === link.href || (link.href === '/#location' && pathname === '/')
                 return (
@@ -107,7 +107,7 @@ export function Navbar() {
               {t('nav.track')}
             </Link>
 
-            <Button asChild className="bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-100 rounded-full px-6 h-11 border-b-4 border-emerald-800">
+            <Button asChild className="bg-emerald-950 hover:bg-emerald-900 shadow-xl shadow-emerald-900/10 rounded-full px-6 h-11 border-b-4 border-emerald-800 transition-all active:translate-y-0.5 active:border-b-0">
               <Link href="/book" className="flex items-center gap-2">
                 <CalendarDays className="w-4 h-4" />
                 {t('nav.book')}
@@ -204,7 +204,7 @@ export function Navbar() {
                 { href: '/track', label: t('nav.track'), icon: Search },
                 { href: '/#location', label: t('nav.location'), icon: MapPin },
                 { href: '/#faq', label: t('nav.faq'), icon: HelpCircle },
-                { href: '/#contact', label: t('nav.contact') || 'Contact', icon: MessageCircle },
+                { href: '/#contact', label: t('nav.contact'), icon: MessageCircle },
               ].map((link, i) => (
                 <MotionLink
                   key={link.href}

@@ -6,6 +6,7 @@ export const dictionary = {
       track: 'Track Booking',
       location: 'Location',
       faq: 'FAQ',
+      contact: 'Contact',
     },
     hero: {
       location_badge: 'Located near Burnham Park, Baguio City',
@@ -27,6 +28,7 @@ export const dictionary = {
       track: 'I-track ang Booking',
       location: 'Lokasyon',
       faq: 'Tulong',
+      contact: 'Kontak',
     },
     hero: {
       location_badge: 'Malapit sa Burnham Park, Baguio City',
