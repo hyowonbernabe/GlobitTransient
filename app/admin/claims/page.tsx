@@ -15,8 +15,28 @@ import { format } from 'date-fns'
 
 export const dynamic = 'force-dynamic'
 
+interface CommissionData {
+  id: string
+  amount: number
+  status: string
+  paidAt: Date | null
+  createdAt: Date
+  agent: {
+    name: string | null
+    agentCode: string | null
+  }
+  booking: {
+    id: string
+    checkIn: Date
+    totalPrice: number
+    user: {
+      name: string | null
+    }
+  }
+}
+
 async function getCommissions() {
-  return await prisma.commission.findMany({
+  const commissions = await prisma.commission.findMany({
     orderBy: { createdAt: 'desc' },
     include: {
       agent: {
@@ -32,6 +52,7 @@ async function getCommissions() {
       }
     }
   })
+  return commissions as unknown as CommissionData[]
 }
 
 export default async function ClaimsPage() {
@@ -81,7 +102,7 @@ export default async function ClaimsPage() {
                         <div className="flex flex-col text-sm">
                             <span className="font-medium text-gray-700">{comm.booking.user.name || 'Guest'}</span>
                             <span className="text-xs text-gray-500">
-                                Check-in: {format(comm.booking.checkIn, "MMM dd")}
+                                Check-in: {format(new Date(comm.booking.checkIn), "MMM dd")}
                             </span>
                         </div>
                     </TableCell>
@@ -98,7 +119,7 @@ export default async function ClaimsPage() {
                         </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-gray-500">
-                        {format(comm.createdAt, "MMM dd, yyyy")}
+                        {format(new Date(comm.createdAt), "MMM dd, yyyy")}
                     </TableCell>
                     <TableCell className="text-right">
                         {comm.status === 'PENDING' && (
@@ -122,7 +143,7 @@ export default async function ClaimsPage() {
                             </div>
                         )}
                         {comm.status === 'PAID_OUT' && (
-                             <span className="text-xs text-gray-400 italic">Paid on {comm.paidAt ? format(comm.paidAt, "MMM dd") : '-'}</span>
+                             <span className="text-xs text-gray-400 italic">Paid on {comm.paidAt ? format(new Date(comm.paidAt), "MMM dd") : '-'}</span>
                         )}
                     </TableCell>
                 </TableRow>
