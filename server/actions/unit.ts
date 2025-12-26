@@ -11,8 +11,7 @@ export async function updateUnit(unitId: string, formData: FormData) {
   const session = await auth()
   if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
 
-  // Parse images separately as getAll returns string[]
-  const images = formData.getAll("images").map(i => i.toString()).filter(i => i.length > 0)
+  const images = formData.getAll("images").map((i: any) => i.toString()).filter((i: any) => i.length > 0)
 
   const rawData = {
     name: formData.get("name"),
@@ -80,7 +79,7 @@ export async function createUnit(formData: FormData) {
   const session = await auth()
   if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
 
-  const images = formData.getAll("images").map(i => i.toString()).filter(i => i.length > 0)
+  const images = formData.getAll("images").map((i: any) => i.toString()).filter((i: any) => i.length > 0)
 
   const rawData = {
     name: formData.get("name"),

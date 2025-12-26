@@ -31,7 +31,7 @@ export async function getRevenueData() {
     // 3. Group by Month
     const months = eachMonthOfInterval({ start: startDate, end: endDate })
 
-    const data = months.map(month => {
+    const data = months.map((month: any) => {
       const monthKey = format(month, 'MMM') // "Jan", "Feb"
 
       // Sum revenue for this month
@@ -72,7 +72,7 @@ export async function getOccupancyData() {
 
     const months = eachMonthOfInterval({ start: startDate, end: endDate })
 
-    const data = months.map(month => {
+    const data = months.map((month: any) => {
       const monthStr = format(month, 'MMM')
       const count = bookings.filter(b => format(b.checkIn, 'MMM') === monthStr).length
       return { name: monthStr, bookings: count }

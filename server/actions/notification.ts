@@ -27,7 +27,7 @@ export async function markAllAsRead() {
 
   try {
     await (prisma as any).notification.updateMany({
-      where: { 
+      where: {
         userId: session.user.id,
         isRead: false
       },
@@ -69,7 +69,7 @@ export async function notifyAdmins(title: string, message: string, link?: string
 
     // Create notifications in batch
     await (prisma as any).notification.createMany({
-      data: admins.map(admin => ({
+      data: admins.map((admin: any) => ({
         userId: admin.id,
         title,
         message,

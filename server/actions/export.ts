@@ -27,7 +27,7 @@ export async function exportBookingsCSV() {
       'Date Booked'
     ]
 
-    const rows = bookings.map(b => [
+    const rows = bookings.map((b: any) => [
       b.id,
       `"${b.user.name || 'Guest'}"`,
       `"${b.user.mobile || ''}"`,
@@ -41,7 +41,7 @@ export async function exportBookingsCSV() {
       format(b.createdAt, 'yyyy-MM-dd HH:mm:ss')
     ])
 
-    return [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+    return [headers.join(','), ...rows.map((r: any) => r.join(','))].join('\n')
   } catch (error) {
     console.error('Export Error:', error)
     return null
@@ -54,7 +54,7 @@ export async function exportCommissionsCSV() {
       include: {
         agent: true,
         booking: {
-            include: { user: true }
+          include: { user: true }
         }
       },
       orderBy: { createdAt: 'desc' }
@@ -72,7 +72,7 @@ export async function exportCommissionsCSV() {
       'Date Paid'
     ]
 
-    const rows = commissions.map(c => [
+    const rows = commissions.map((c: any) => [
       c.id,
       `"${c.agent.name}"`,
       c.agent.agentCode || '',
@@ -84,7 +84,7 @@ export async function exportCommissionsCSV() {
       c.paidAt ? format(c.paidAt, 'yyyy-MM-dd') : ''
     ])
 
-    return [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+    return [headers.join(','), ...rows.map((r: any) => r.join(','))].join('\n')
   } catch (error) {
     console.error('Export Error:', error)
     return null

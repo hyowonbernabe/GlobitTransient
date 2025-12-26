@@ -30,7 +30,7 @@ export async function getSystemContext() {
   }
 
   // 3. Format Units
-  const unitText = units.map(u => `
+  const unitText = units.map((u: any) => `
 - Unit: ${u.name}
   - Price: PHP ${u.basePrice / 100} (Good for ${u.basePax} pax)
   - Extra Pax: PHP ${u.extraPaxPrice / 100}/head
@@ -40,7 +40,7 @@ export async function getSystemContext() {
 `).join('\n')
 
   // 4. Format Snippets
-  const knowledgeText = snippets.length > 0 
+  const knowledgeText = snippets.length > 0
     ? snippets.map((s: any) => `- [${s.category}]: ${s.content}`).join('\n')
     : `- Rules: Check-in 2PM, Check-out 12PM. 50% Downpayment required.` // Default fallback
 
