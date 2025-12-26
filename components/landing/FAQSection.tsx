@@ -105,13 +105,14 @@ export function FAQSection() {
                     <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-emerald-500 via-amber-400 to-emerald-500" />
                     <div className="space-y-2">
                         <h4 className="text-xl font-black">Still have questions?</h4>
-                        <p className="text-emerald-100/60 font-medium">We're here to help you plan the perfect Cordillera experience.</p>
+                        <p className="text-emerald-100/60 font-medium">Our virtual concierge is available 24/7 to help you plan your stay.</p>
                     </div>
-                    <Link href="/#contact">
-                        <Button className="bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-black rounded-2xl px-10 py-6 text-lg">
-                            Talk to Us
-                        </Button>
-                    </Link>
+                    <Button
+                        onClick={() => window.dispatchEvent(new CustomEvent('open-chat'))}
+                        className="bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-black rounded-2xl px-10 py-6 text-lg"
+                    >
+                        Ask our AI Assistant
+                    </Button>
                 </motion.div>
             </div>
         </section>

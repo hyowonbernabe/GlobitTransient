@@ -19,6 +19,13 @@ export function ChatWidget() {
     const [inputValue, setInputValue] = useState('')
     const scrollRef = useRef<HTMLDivElement>(null)
 
+    // Listen for custom event to open chat
+    useEffect(() => {
+        const handleOpenChat = () => setIsOpen(true)
+        window.addEventListener('open-chat', handleOpenChat)
+        return () => window.removeEventListener('open-chat', handleOpenChat)
+    }, [])
+
     const isLoading = status === 'streaming' || status === 'submitted'
 
     // Auto-scroll to bottom
@@ -51,7 +58,7 @@ export function ChatWidget() {
     }
 
     return (
-        <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2">
+        <div className="fixed bottom-4 right-4 z-[100] flex flex-col items-end gap-2 text-gray-900">
             {isOpen && (
                 <Card className="w-[350px] h-[500px] shadow-2xl border-emerald-100 flex flex-col animate-in slide-in-from-bottom-10 fade-in duration-300">
                     <CardHeader className="bg-emerald-900 text-white p-4 rounded-t-xl flex flex-row items-center justify-between shrink-0">

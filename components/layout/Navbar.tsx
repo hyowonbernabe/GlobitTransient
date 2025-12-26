@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X, Search, CalendarDays, Home, HelpCircle, MapPin, Facebook, Mail, Phone } from 'lucide-react'
+import { Menu, X, Search, CalendarDays, Home, HelpCircle, MapPin, MessageCircle, Facebook, Mail, Phone } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -74,6 +74,7 @@ export function Navbar() {
                 { href: '/', label: t('nav.home'), icon: Home },
                 { href: '/#location', label: t('nav.location'), icon: MapPin },
                 { href: '/#faq', label: t('nav.faq'), icon: HelpCircle },
+                { href: '/#contact', label: t('nav.contact') || 'Contact', icon: MessageCircle },
               ].map((link) => {
                 const isActive = pathname === link.href || (link.href === '/#location' && pathname === '/')
                 return (
@@ -203,6 +204,7 @@ export function Navbar() {
                 { href: '/track', label: t('nav.track'), icon: Search },
                 { href: '/#location', label: t('nav.location'), icon: MapPin },
                 { href: '/#faq', label: t('nav.faq'), icon: HelpCircle },
+                { href: '/#contact', label: t('nav.contact') || 'Contact', icon: MessageCircle },
               ].map((link, i) => (
                 <MotionLink
                   key={link.href}
