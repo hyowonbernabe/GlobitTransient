@@ -10,7 +10,7 @@ export default function TermsPage() {
       <main className="flex-1 py-12 md:py-20">
         <div className="container mx-auto px-4 max-w-4xl">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 md:p-12 space-y-8">
-            
+
             <div className="space-y-4">
               <h1 className="text-3xl md:text-4xl font-bold text-emerald-950">Terms of Service & House Rules</h1>
               <p className="text-gray-600">
@@ -23,10 +23,10 @@ export default function TermsPage() {
             <section className="space-y-4">
               <h2 className="text-xl font-bold text-gray-900">1. Reservations & Payment</h2>
               <ul className="list-disc pl-5 space-y-2 text-gray-600">
-                <li>A <strong>50% downpayment</strong> is required to confirm any booking. This safeguards us against last-minute cancellations.</li>
+                <li>A <strong>fixed downpayment</strong> (tiered based on total bill) is required to secure any booking. This safeguards against last-minute cancellations.</li>
+                <li>Payments are processed securely via <strong>PayMongo</strong>. Your booking is confirmed instantly upon successful payment.</li>
                 <li>The remaining balance must be paid upon arrival (Check-in) via Cash or GCash.</li>
                 <li>The downpayment is <strong>strictly non-refundable</strong>.</li>
-                <li>We do not accept "pencil bookings" or reservations without payment proof.</li>
               </ul>
             </section>
 
