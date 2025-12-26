@@ -1,9 +1,8 @@
 'use server'
 
 import prisma from "@/lib/prisma"
-import { sendBookingConfirmation } from "@/server/actions/email"
-import { createNotification } from "@/server/actions/notification"
 import { revalidatePath } from "next/cache"
+import { confirmBooking } from "@/lib/booking-service"
 
 const getAuthHeader = () => {
   const apiKey = process.env.PAYMONGO_SECRET_KEY
@@ -20,7 +19,7 @@ export async function initiateCheckout(bookingId: string) {
 
     if (!booking) return { error: "Booking not found." }
 
-    // 1. Race Condition Check
+    // Race Condition Check
     const conflict = await prisma.booking.findFirst({
       where: {
         unitId: booking.unitId,
@@ -37,16 +36,13 @@ export async function initiateCheckout(bookingId: string) {
         where: { id: bookingId },
         data: { status: 'CANCELLED' }
       })
-      return { error: "This slot was just taken by another user. Please re-book." }
+      return { error: "Slot taken by another user." }
     }
 
     const baseUrl = process.env.AUTH_URL || "http://localhost:3000"
     
-    // 2. Prepare Images
-    const validImages = booking.unit.images
-      .filter(img => img.startsWith('http') || img.startsWith('https'))
+    const validImages = booking.unit.images.filter(img => img.startsWith('http') || img.startsWith('https'))
 
-    // 3. Create PayMongo Session
     const payload = {
       data: {
         attributes: {
@@ -94,7 +90,6 @@ export async function initiateCheckout(bookingId: string) {
       return { error: "Payment gateway error. Please contact support." }
     }
 
-    // 4. Save Session ID to DB (Critical for verification)
     await prisma.booking.update({
         where: { id: booking.id },
         data: { checkoutSessionId: data.data.id }
@@ -108,7 +103,6 @@ export async function initiateCheckout(bookingId: string) {
   }
 }
 
-// Polling Action: Called by the client to check if payment went through
 export async function checkPaymentStatus(bookingId: string) {
   try {
     const booking = await prisma.booking.findUnique({
@@ -119,7 +113,6 @@ export async function checkPaymentStatus(bookingId: string) {
     if (booking.status === 'CONFIRMED') return { status: 'confirmed' }
     if (!booking.checkoutSessionId) return { status: 'pending' }
 
-    // If not confirmed in DB yet, ask PayMongo
     const response = await fetch(`https://api.paymongo.com/v1/checkout_sessions/${booking.checkoutSessionId}`, {
       headers: { 'Authorization': getAuthHeader() },
       cache: 'no-store'
@@ -129,8 +122,7 @@ export async function checkPaymentStatus(bookingId: string) {
     const paymentStatus = data.data?.attributes?.payment_status 
 
     if (paymentStatus === 'paid') {
-       // Confirm it now
-       await confirmBookingLogic(bookingId, `[PayMongo] Paid via Session ${booking.checkoutSessionId}`)
+       await confirmBooking(bookingId, `[PayMongo] Paid via Session ${booking.checkoutSessionId}`)
        revalidatePath(`/payment/${bookingId}`)
        return { status: 'confirmed' }
     }
@@ -143,58 +135,33 @@ export async function checkPaymentStatus(bookingId: string) {
   }
 }
 
-// Internal Logic to mark as confirmed (Shared by Webhook and Manual Check)
-export async function confirmBookingLogic(bookingId: string, notesPrefix: string) {
-    const booking = await prisma.booking.findUnique({
-        where: { id: bookingId },
-        include: { unit: true, user: true }
+export async function verifyTransaction(sessionId: string, bookingId: string) {
+  try {
+    const booking = await prisma.booking.findUnique({ where: { id: bookingId }})
+    if (booking?.status === 'CONFIRMED') return { success: true }
+
+    const response = await fetch(`https://api.paymongo.com/v1/checkout_sessions/${sessionId}`, {
+      headers: { 'Authorization': getAuthHeader() },
+      cache: 'no-store'
     })
+    
+    const data = await response.json()
+    const paymentStatus = data.data?.attributes?.payment_status 
 
-    if (booking && booking.status !== 'CONFIRMED') {
-        await prisma.booking.update({
-            where: { id: bookingId },
-            data: {
-                status: 'CONFIRMED',
-                paymentStatus: 'PARTIAL',
-                notes: booking.notes ? `${booking.notes}\n${notesPrefix}` : notesPrefix
-            }
-        })
-
-        // Agent Commission
-        if (booking.agentId) {
-            const agent = await prisma.user.findUnique({ where: { id: booking.agentId }})
-            if (agent) {
-                const commissionAmount = Math.round(booking.totalPrice * agent.commissionRate)
-                await prisma.commission.create({
-                    data: {
-                        amount: commissionAmount,
-                        status: 'PENDING',
-                        bookingId: booking.id,
-                        agentId: agent.id
-                    }
-                })
-                await createNotification(
-                    agent.id,
-                    "New Commission",
-                    `You earned commission for booking ${booking.id}`,
-                    "/portal/bookings",
-                    "SUCCESS"
-                )
-            }
-        }
-
-        // Email
-        if (booking.user.email) {
-            await sendBookingConfirmation({
-                bookingId: booking.id,
-                guestName: booking.user.name || 'Guest',
-                guestEmail: booking.user.email,
-                unitName: booking.unit.name,
-                checkIn: booking.checkIn,
-                checkOut: booking.checkOut,
-                totalPrice: booking.totalPrice,
-                balance: booking.balance
-            })
-        }
+    if (paymentStatus === 'paid') {
+      await confirmBooking(bookingId, `[PayMongo] Paid via Session ${sessionId}`)
+      revalidatePath(`/payment/${bookingId}`)
+      revalidatePath('/track')
+      return { success: true }
+    } else {
+      return { error: "Payment not completed yet." }
     }
+  } catch (error) {
+    console.error("Verification Error:", error)
+    return { error: "Failed to verify payment." }
+  }
+}
+
+export async function finalizePayment(bookingId: string, paymentMethod: string) {
+    return { success: true } 
 }

@@ -1,226 +1,71 @@
-'use server'
+import { NextResponse } from 'next/server'
+import { headers } from 'next/headers'
+import crypto from 'crypto'
+import { confirmBooking } from '@/lib/booking-service'
 
-import prisma from "@/lib/prisma"
-import { sendBookingConfirmation } from "@/server/actions/email"
-import { createNotification } from "@/server/actions/notification"
-import { revalidatePath } from "next/cache"
+// Explicitly mark as dynamic to fix build errors with request body reading
+export const dynamic = 'force-dynamic'
 
-const getAuthHeader = () => {
-  const apiKey = process.env.PAYMONGO_SECRET_KEY
-  if (!apiKey) throw new Error("PAYMONGO_SECRET_KEY is missing")
-  return `Basic ${Buffer.from(apiKey + ':').toString('base64')}`
-}
-
-export async function initiateCheckout(bookingId: string) {
+export async function POST(req: Request) {
   try {
-    const booking = await prisma.booking.findUnique({
-      where: { id: bookingId },
-      include: { unit: true, user: true }
-    })
-
-    if (!booking) return { error: "Booking not found." }
-
-    // Race Condition Check
-    const conflict = await prisma.booking.findFirst({
-      where: {
-        unitId: booking.unitId,
-        status: 'CONFIRMED',
-        id: { not: bookingId },
-        OR: [
-          { checkIn: { lte: booking.checkOut }, checkOut: { gte: booking.checkIn } }
-        ]
-      }
-    })
-
-    if (conflict) {
-      await prisma.booking.update({
-        where: { id: bookingId },
-        data: { status: 'CANCELLED' }
-      })
-      return { error: "Slot taken by another user." }
-    }
-
-    const baseUrl = process.env.AUTH_URL || "http://localhost:3000"
+    const bodyText = await req.text()
     
-    // Ensure we only send valid absolute URLs to PayMongo
-    const validImages = booking.unit.images.filter(img => img.startsWith('http') || img.startsWith('https'))
+    // Log minimal info
+    console.log("🔹 [Webhook] Received PayMongo Event")
 
-    const payload = {
-      data: {
-        attributes: {
-          line_items: [
-            {
-              currency: 'PHP',
-              amount: booking.downpayment, 
-              description: `Downpayment for ${booking.unit.name}`,
-              name: 'Booking Downpayment',
-              quantity: 1,
-              ...(validImages.length > 0 && { images: [validImages[0]] })
-            }
-          ],
-          payment_method_types: ['gcash', 'card', 'paymaya', 'grab_pay'],
-          success_url: `${baseUrl}/payment/${bookingId}?success=true&session_id={CHECKOUT_SESSION_ID}`,
-          cancel_url: `${baseUrl}/payment/${bookingId}?cancelled=true`,
-          description: `Booking ID: ${booking.id}`,
-          billing: {
-            name: booking.user.name,
-            email: booking.user.email,
-            phone: booking.user.mobile
-          },
-          metadata: {
-            booking_id: booking.id
-          },
-          send_email_receipt: true
-        }
+    const headerPayload = await headers();
+    const signature = headerPayload.get('paymongo-signature')
+
+    // 1. Signature Verification
+    const webhookSecret = process.env.PAYMONGO_WEBHOOK_SECRET
+    if (webhookSecret && signature) {
+      const parts = signature.split(',')
+      
+      const timestamp = parts.find(part => part.trim().startsWith('t='))?.split('=')[1]
+      const teSignature = parts.find(part => part.trim().startsWith('te='))?.split('=')[1]
+      const liSignature = parts.find(part => part.trim().startsWith('li='))?.split('=')[1]
+
+      if (!timestamp) {
+        return NextResponse.json({ error: "Invalid Signature" }, { status: 401 })
+      }
+
+      const expectedSignature = crypto
+        .createHmac('sha256', webhookSecret)
+        .update(`${timestamp}.${bodyText}`)
+        .digest('hex')
+
+      const isTestMatch = teSignature && expectedSignature === teSignature
+      const isLiveMatch = liSignature && expectedSignature === liSignature
+
+      if (!isTestMatch && !isLiveMatch) {
+        console.error("❌ [Webhook] Signature Mismatch")
+        return NextResponse.json({ error: "Invalid Signature" }, { status: 401 })
       }
     }
 
-    const response = await fetch('https://api.paymongo.com/v1/checkout_sessions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': getAuthHeader()
-      },
-      body: JSON.stringify(payload),
-      cache: 'no-store'
-    })
+    const body = JSON.parse(bodyText)
+    const eventType = body.data.attributes.type
 
-    const data = await response.json()
+    // 2. Handle 'checkout_session.payment.paid'
+    if (eventType === 'checkout_session.payment.paid') {
+      const checkoutSession = body.data.attributes.data
+      const metadata = checkoutSession.attributes.metadata
+      const bookingId = metadata?.booking_id
 
-    if (data.errors) {
-      console.error("PayMongo Error:", JSON.stringify(data.errors, null, 2))
-      return { error: "Payment gateway error. Please contact support." }
+      if (bookingId) {
+        console.log(`✅ [Webhook] Confirming Booking ${bookingId}`)
+        
+        await confirmBooking(
+            bookingId, 
+            `[Webhook] Payment confirmed via PayMongo Event ${body.data.id}`
+        )
+      }
     }
 
-    await prisma.booking.update({
-        where: { id: booking.id },
-        data: { checkoutSessionId: data.data.id }
-    })
-
-    return { success: true, url: data.data.attributes.checkout_url }
+    return NextResponse.json({ status: 'success' })
 
   } catch (error) {
-    console.error("Gateway Init Error:", error)
-    return { error: "Failed to connect to payment gateway." }
+    console.error("❌ [Webhook] Error:", error)
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
   }
-}
-
-// Used by polling component
-export async function checkPaymentStatus(bookingId: string) {
-  try {
-    const booking = await prisma.booking.findUnique({
-        where: { id: bookingId }
-    })
-
-    if (!booking) return { status: 'error', message: 'Booking not found' }
-    if (booking.status === 'CONFIRMED') return { status: 'confirmed' }
-    if (!booking.checkoutSessionId) return { status: 'pending' }
-
-    const response = await fetch(`https://api.paymongo.com/v1/checkout_sessions/${booking.checkoutSessionId}`, {
-      headers: { 'Authorization': getAuthHeader() },
-      cache: 'no-store'
-    })
-    
-    const data = await response.json()
-    const paymentStatus = data.data?.attributes?.payment_status 
-
-    if (paymentStatus === 'paid') {
-       await confirmBooking(bookingId, `[PayMongo] Paid via Session ${booking.checkoutSessionId}`)
-       revalidatePath(`/payment/${bookingId}`)
-       return { status: 'confirmed' }
-    }
-
-    return { status: 'pending' }
-
-  } catch (error) {
-    console.error("Check Status Error:", error)
-    return { status: 'error', message: 'Failed to check status' }
-  }
-}
-
-// Used by payment page return
-export async function verifyTransaction(sessionId: string, bookingId: string) {
-  try {
-    // Idempotency Check
-    const booking = await prisma.booking.findUnique({ where: { id: bookingId }})
-    if (booking?.status === 'CONFIRMED') return { success: true }
-
-    const response = await fetch(`https://api.paymongo.com/v1/checkout_sessions/${sessionId}`, {
-      headers: { 'Authorization': getAuthHeader() },
-      cache: 'no-store'
-    })
-    
-    const data = await response.json()
-    const paymentStatus = data.data?.attributes?.payment_status 
-
-    if (paymentStatus === 'paid') {
-      await confirmBooking(bookingId, `[PayMongo] Paid via Session ${sessionId}`)
-      revalidatePath(`/payment/${bookingId}`)
-      revalidatePath('/track')
-      return { success: true }
-    } else {
-      return { error: "Payment not completed yet." }
-    }
-  } catch (error) {
-    console.error("Verification Error:", error)
-    return { error: "Failed to verify payment." }
-  }
-}
-
-// Shared helper to confirm booking (Exported for Webhook usage)
-export async function confirmBooking(bookingId: string, notesPrefix: string) {
-    const booking = await prisma.booking.findUnique({
-        where: { id: bookingId },
-        include: { unit: true, user: true }
-    })
-
-    if (booking && booking.status !== 'CONFIRMED') {
-        await prisma.booking.update({
-            where: { id: bookingId },
-            data: {
-                status: 'CONFIRMED',
-                paymentStatus: 'PARTIAL',
-                notes: booking.notes ? `${booking.notes}\n${notesPrefix}` : notesPrefix
-            }
-        })
-
-        if (booking.agentId) {
-            const agent = await prisma.user.findUnique({ where: { id: booking.agentId }})
-            if (agent) {
-                const commissionAmount = Math.round(booking.totalPrice * agent.commissionRate)
-                await prisma.commission.create({
-                    data: {
-                        amount: commissionAmount,
-                        status: 'PENDING',
-                        bookingId: booking.id,
-                        agentId: agent.id
-                    }
-                })
-                await createNotification(
-                    agent.id,
-                    "New Commission",
-                    `You earned commission for booking ${booking.id}`,
-                    "/portal/bookings",
-                    "SUCCESS"
-                )
-            }
-        }
-
-        if (booking.user.email) {
-            await sendBookingConfirmation({
-                bookingId: booking.id,
-                guestName: booking.user.name || 'Guest',
-                guestEmail: booking.user.email,
-                unitName: booking.unit.name,
-                checkIn: booking.checkIn,
-                checkOut: booking.checkOut,
-                totalPrice: booking.totalPrice,
-                balance: booking.balance
-            })
-        }
-    }
-}
-
-export async function finalizePayment(bookingId: string, paymentMethod: string) {
-    return { success: true } 
 }
