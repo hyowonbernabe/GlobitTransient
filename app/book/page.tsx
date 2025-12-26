@@ -16,6 +16,22 @@ interface PageProps {
   }>
 }
 
+interface UnitData {
+  id: string
+  name: string
+  slug: string
+  description: string
+  images: string[]
+  basePrice: number
+  basePax: number
+  maxPax: number
+  extraPaxPrice: number
+  hasTV: boolean
+  hasRef: boolean
+  hasHeater: boolean
+  hasOwnCR: boolean
+}
+
 async function getFilteredUnits(from?: string, to?: string, pax?: string) {
   // 1. Base Query
   const where: any = {}
@@ -35,7 +51,6 @@ async function getFilteredUnits(from?: string, to?: string, pax?: string) {
 
     if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
       // Find units that HAVE bookings in this range
-      // UPDATED: Only exclude units with CONFIRMED bookings. Pending ones are fair game.
       const unavailableUnitIds = await prisma.booking.findMany({
         where: {
           status: { in: ['CONFIRMED'] }, 
@@ -50,7 +65,8 @@ async function getFilteredUnits(from?: string, to?: string, pax?: string) {
         select: { unitId: true }
       })
 
-      const excludedIds = unavailableUnitIds.map(b => b.unitId)
+      // Fix: Explicitly type the parameter to avoid implicit 'any'
+      const excludedIds = unavailableUnitIds.map((b: { unitId: string }) => b.unitId)
       
       // Exclude these IDs from result
       where.id = { notIn: excludedIds }
@@ -64,7 +80,7 @@ async function getFilteredUnits(from?: string, to?: string, pax?: string) {
     },
   })
   
-  return units
+  return units as unknown as UnitData[]
 }
 
 export default async function BookPage(props: PageProps) {

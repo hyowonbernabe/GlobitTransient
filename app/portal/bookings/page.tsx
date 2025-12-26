@@ -14,8 +14,18 @@ import { format } from 'date-fns'
 
 export const dynamic = 'force-dynamic'
 
+interface AgentBooking {
+  id: string
+  status: string
+  checkIn: Date
+  checkOut: Date
+  unit: { name: string }
+  user: { name: string | null }
+  commissions: { amount: number, status: string }[]
+}
+
 async function getAgentBookings(agentId: string) {
-  return await prisma.booking.findMany({
+  const bookings = await prisma.booking.findMany({
     where: { agentId },
     orderBy: { createdAt: 'desc' },
     include: {
@@ -31,6 +41,7 @@ async function getAgentBookings(agentId: string) {
       }
     }
   })
+  return bookings as unknown as AgentBooking[]
 }
 
 export default async function AgentBookingsPage() {
@@ -83,7 +94,7 @@ export default async function AgentBookingsPage() {
                         {booking.unit.name}
                       </TableCell>
                       <TableCell className="text-sm text-gray-500">
-                        {format(booking.checkIn, "MMM dd")} - {format(booking.checkOut, "MMM dd")}
+                        {format(new Date(booking.checkIn), "MMM dd")} - {format(new Date(booking.checkOut), "MMM dd")}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className={

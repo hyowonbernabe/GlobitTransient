@@ -8,8 +8,19 @@ import { Copy, DollarSign, Users, Clock } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
+interface DashboardCommission {
+  id: string
+  amount: number
+  status: string
+  booking: {
+    totalPrice: number
+    checkIn: Date
+    user: { name: string | null }
+  }
+}
+
 async function getAgentStats(userId: string) {
-  const [stats, recentBookings] = await Promise.all([
+  const [stats, recentBookingsRaw] = await Promise.all([
     // Aggregate Stats
     prisma.commission.aggregate({
       where: { agentId: userId },
@@ -38,6 +49,9 @@ async function getAgentStats(userId: string) {
     where: { agentId: userId, status: 'PENDING' },
     _sum: { amount: true }
   })
+
+  // Explicitly cast recent bookings
+  const recentBookings = recentBookingsRaw as unknown as DashboardCommission[]
 
   return {
     totalEarnings: stats._sum.amount || 0,
@@ -84,7 +98,6 @@ export default async function AgentDashboard() {
               value={referralLink} 
               className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 font-mono"
             />
-            {/* Note: In a real client component, we'd add onClick navigator.clipboard.writeText */}
             <Button variant="secondary" className="bg-white text-emerald-900 hover:bg-emerald-50">
               <Copy className="w-4 h-4 mr-2" />
               Copy
