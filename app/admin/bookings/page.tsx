@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Check, X, FileText } from 'lucide-react'
+import { Check, X } from 'lucide-react'
 import { approveBooking, cancelBooking } from '@/server/actions/booking-admin'
 import { format } from 'date-fns'
 import {
@@ -21,14 +21,36 @@ import {
 
 export const dynamic = 'force-dynamic'
 
+// Define explicit interface for Booking Data to fix implicit 'any' errors
+interface BookingData {
+  id: string
+  checkIn: Date
+  checkOut: Date
+  status: string
+  totalPrice: number
+  downpayment: number
+  notes: string | null
+  adults: number
+  kids: number
+  user: {
+    name: string | null
+    mobile: string | null
+  }
+  unit: {
+    name: string
+  }
+}
+
 async function getBookings() {
-  return await prisma.booking.findMany({
+  const bookings = await prisma.booking.findMany({
     orderBy: { createdAt: 'desc' },
     include: {
       user: true,
       unit: true
     }
   })
+  // Cast to BookingData[] to ensure type safety downstream
+  return bookings as unknown as BookingData[]
 }
 
 export default async function BookingsPage() {
@@ -40,7 +62,8 @@ export default async function BookingsPage() {
   const BookingTable = ({ statusFilter }: { statusFilter: string }) => {
     const filtered = statusFilter === 'ALL' 
       ? bookings 
-      : bookings.filter(b => b.status === statusFilter)
+      // Explicitly type 'b' to fix the build error
+      : bookings.filter((b: BookingData) => b.status === statusFilter)
 
     if (filtered.length === 0) {
       return <div className="text-center py-12 text-gray-500">No bookings found in this category.</div>
@@ -76,7 +99,8 @@ export default async function BookingsPage() {
                     <div className="flex flex-col">
                       <span className="font-medium text-emerald-800">{booking.unit.name}</span>
                       <span className="text-xs text-gray-500">
-                        {format(booking.checkIn, "MMM dd")} - {format(booking.checkOut, "MMM dd")}
+                        {/* Ensure dates are Date objects */}
+                        {format(new Date(booking.checkIn), "MMM dd")} - {format(new Date(booking.checkOut), "MMM dd")}
                       </span>
                     </div>
                   </TableCell>
