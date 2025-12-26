@@ -8,6 +8,7 @@ import { ReviewSection } from '@/components/reviews/ReviewSection'
 import { Users, Wind, Tv, Bath, Snowflake } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,11 +17,6 @@ interface PageProps {
 }
 
 async function getUnitDetails(slug: string) {
-  // 1. Fetch Unit with Reviews AND Confirmed Bookings
-  // Note: We only care about CONFIRMED bookings for blocking dates visually.
-  // PENDING bookings are still technically "open" in our new logic, 
-  // though you might want to warn users. For now, we only block hard confirmed slots.
-  
   const unit = await (prisma as any).unit.findUnique({
     where: { slug },
     include: {
@@ -35,7 +31,7 @@ async function getUnitDetails(slug: string) {
       bookings: {
         where: {
           status: 'CONFIRMED',
-          checkOut: { gte: new Date() } // Only future/current bookings
+          checkOut: { gte: new Date() }
         },
         select: {
           checkIn: true,
@@ -47,6 +43,33 @@ async function getUnitDetails(slug: string) {
   return unit
 }
 
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const params = await props.params;
+  const unit = await getUnitDetails(params.slug)
+
+  if (!unit) {
+    return {
+      title: 'Unit Not Found | Globit Transient',
+    }
+  }
+
+  const price = new Intl.NumberFormat('en-PH', { 
+    style: 'currency', 
+    currency: 'PHP',
+    minimumFractionDigits: 0
+  }).format(unit.basePrice / 100)
+
+  return {
+    title: `${unit.name} - ${price}/night | Globit Transient`,
+    description: unit.description.substring(0, 160),
+    openGraph: {
+      title: unit.name,
+      description: `Stay at ${unit.name} for only ${price}. Good for ${unit.basePax} pax.`,
+      images: unit.images.length > 0 ? [unit.images[0]] : ['/assets/images/placeholder.png'],
+    },
+  }
+}
+
 export default async function UnitPage(props: PageProps) {
   const params = await props.params;
   const unit = await getUnitDetails(params.slug)
@@ -55,7 +78,6 @@ export default async function UnitPage(props: PageProps) {
     return notFound()
   }
 
-  // Transform bookings into DateRange objects for the Client Component
   const blockedDates = unit.bookings.map((b: any) => ({
     from: b.checkIn,
     to: b.checkOut
@@ -70,7 +92,6 @@ export default async function UnitPage(props: PageProps) {
           
           <div className="flex flex-col lg:grid lg:grid-cols-3 gap-8 items-start">
             
-            {/* Header & Gallery */}
             <div className="w-full order-1 lg:col-span-2 space-y-8">
               <div className="space-y-4">
                 <h1 className="text-3xl md:text-4xl font-bold text-emerald-950">{unit.name}</h1>
@@ -95,7 +116,6 @@ export default async function UnitPage(props: PageProps) {
               <UnitGallery images={unit.images} unitName={unit.name} />
             </div>
 
-            {/* Booking Form (Sticky Sidebar on Desktop) */}
             <div className="w-full order-2 lg:order-2 lg:col-span-1 lg:col-start-3 lg:row-start-1 lg:row-span-3">
                <BookingForm 
                  pricing={{
@@ -110,10 +130,8 @@ export default async function UnitPage(props: PageProps) {
                />
             </div>
 
-            {/* Details & Reviews */}
             <div className="w-full order-3 lg:order-3 lg:col-span-2 space-y-12">
               
-              {/* Description */}
               <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm space-y-6">
                 <div>
                    <h2 className="text-xl font-bold text-gray-900 mb-3">About this Unit</h2>
@@ -141,7 +159,6 @@ export default async function UnitPage(props: PageProps) {
                 </div>
               </div>
 
-              {/* Rules */}
               <div className="bg-yellow-50 p-6 rounded-xl border border-yellow-100 space-y-3">
                  <h3 className="font-bold text-yellow-900">Important Reminders</h3>
                  <ul className="text-sm text-yellow-800 space-y-2 list-disc list-inside">
@@ -154,7 +171,6 @@ export default async function UnitPage(props: PageProps) {
 
               <Separator />
 
-              {/* Reviews */}
               <ReviewSection unitId={unit.id} reviews={unit.reviews} />
 
             </div>

@@ -11,7 +11,7 @@ export async function deleteReview(reviewId: string) {
   if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
 
   try {
-    const review = await prisma.review.findUnique({
+    const review = await (prisma as any).review.findUnique({
       where: { id: reviewId },
       include: { 
         unit: { select: { name: true } },
@@ -21,7 +21,7 @@ export async function deleteReview(reviewId: string) {
 
     if (!review) return { error: "Review not found" }
 
-    await prisma.review.delete({
+    await (prisma as any).review.delete({
       where: { id: reviewId }
     })
 
