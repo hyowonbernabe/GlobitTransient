@@ -1,452 +1,367 @@
-'use client'
+"use client"
 
-import { useState, useRef, useEffect, useCallback } from 'react'
-import {
-  MapPin,
-  Store,
-  Coffee,
-  Dumbbell,
-  ShoppingCart,
-  Utensils,
-  Trees,
+import { useRef, useState, useEffect } from "react"
+import dynamic from "next/dynamic"
+import { useGSAP } from "@gsap/react"
+import gsap from "gsap"
+import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { 
+  ShoppingBasket, 
+  Shield, 
+  Store, 
+  Bus, 
+  Navigation, 
+  PawPrint, 
+  Church, 
+  ShoppingCart, 
+  Coffee, 
+  Trees, 
   ShoppingBag,
-  Shield,
   Car,
-  Footprints,
-  Cat,
-  ChevronLeft,
-  ChevronRight,
-  ChevronUp,
-  ChevronDown
-} from 'lucide-react'
-import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
-import { motion, AnimatePresence } from 'framer-motion'
+  Footprints
+} from "lucide-react"
 
-type PlaceType = 'Minimart' | 'Convenience' | 'Pet' | 'Gym' | 'Supermarket' | 'Restaurant' | 'Park' | 'Mall' | 'Police'
+// Dynamically import LeafletMap with SSR disabled
+const LeafletMap = dynamic(
+  () => import("./LeafletMap"),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full bg-gray-100 animate-pulse flex items-center justify-center text-gray-400 font-medium">
+        Loading Map...
+      </div>
+    )
+  }
+)
 
-interface Place {
-  id: string
-  name: string
-  type: string
-  category: PlaceType
-  walkTime?: number
-  driveTime?: number
-  description: string
+// Register ScrollTrigger
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger)
 }
 
-const PLACES: Place[] = [
+// --- CONFIGURATION ---
+const GLOBIT_POSITION: [number, number] = [16.391140396855135, 120.57783887271736] 
+const ZOOM_LEVEL = 15
+
+// Landmark Data
+const LANDMARKS = [
   {
-    id: 'globittransient',
-    name: 'Globit Transient',
-    type: 'Transient',
-    category: 'Park',
-    walkTime: 1,
-    description: 'The transient place for your stay.',
+    id: 1,
+    name: "7-Eleven",
+    type: "Convenience",
+    distance: "150m",
+    time: "2 min walk",
+    mode: "walk",
+    coords: [16.38916315175218, 120.57634857257291] as [number, number],
+    icon: Store,
+    color: "text-orange-500",
+    bg: "bg-orange-100"
   },
   {
-    id: 'lorimar',
-    name: 'Lorimar Minimart',
-    type: 'Minimart',
-    category: 'Minimart',
-    walkTime: 5,
-    description: 'Quick stop for basic necessities and snacks.',
+    id: 2,
+    name: "Lorimar Minimart",
+    type: "Groceries",
+    distance: "200m",
+    time: "3 min walk",
+    mode: "walk",
+    coords: [16.389647281251463, 120.5765394316856] as [number, number],
+    icon: ShoppingBasket,
+    color: "text-indigo-500",
+    bg: "bg-indigo-100"
   },
   {
-    id: '7eleven',
-    name: '7-Eleven Marcos Highway',
-    type: 'Convenience Store',
-    category: 'Convenience',
-    walkTime: 5,
-    description: '24/7 convenience store for late night cravings.',
+    id: 3,
+    name: "Police Station (Stn 10)",
+    type: "Safety",
+    distance: "400m",
+    time: "5 min walk",
+    mode: "walk",
+    coords: [16.388922044632434, 120.57543886002945] as [number, number],
+    icon: Shield,
+    color: "text-blue-600",
+    bg: "bg-blue-100"
   },
   {
-    id: 'pethabitat',
-    name: 'Baguio Pet Habitat - Marcos Highway',
-    type: 'Pet Store',
-    category: 'Pet',
-    walkTime: 4,
-    description: 'Supplies and food for your furry friends.',
+    id: 4,
+    name: "Pet Habitat",
+    type: "Pet Supplies",
+    distance: "300m",
+    time: "4 min walk",
+    mode: "walk",
+    coords: [16.38996919001711, 120.5772488723117] as [number, number],
+    icon: PawPrint,
+    color: "text-amber-500",
+    bg: "bg-amber-100"
   },
   {
-    id: 'hanes',
-    name: "Hane's Sports and Gym",
-    type: 'Gym',
-    category: 'Gym',
-    walkTime: 4,
-    description: 'Stay fit even while on vacation.',
+    id: 5,
+    name: "Divine Mercy Church",
+    type: "Worship",
+    distance: "800m",
+    time: "10 min walk",
+    mode: "walk",
+    coords: [16.39053800235778, 120.57732191168738] as [number, number],
+    icon: Church,
+    color: "text-purple-500",
+    bg: "bg-purple-100"
   },
   {
-    id: 'bcpo',
-    name: 'BCPO Police Station 10',
-    type: 'Police Station',
-    category: 'Police',
-    walkTime: 6,
-    description: 'Nearby station ensuring safety and security.',
+    id: 6,
+    name: "Puregold Jr. Bakakeng",
+    type: "Supermarket",
+    distance: "1.2km",
+    time: "3 min drive",
+    mode: "drive",
+    coords: [16.394738094049735, 120.58023279596061] as [number, number],
+    icon: ShoppingCart,
+    color: "text-green-600",
+    bg: "bg-green-100"
   },
   {
-    id: 'puregold',
-    name: 'Puregold Jr. Bakakeng',
-    type: 'Supermarket',
-    category: 'Supermarket',
-    walkTime: 11,
-    description: 'Full grocery shopping for long stays.',
+    id: 7,
+    name: "MOCH Cafe and Bistro",
+    type: "Dining",
+    distance: "350m",
+    time: "5 min walk",
+    mode: "walk",
+    coords: [16.3945585642896, 120.5712792380058] as [number, number],
+    icon: Coffee,
+    color: "text-rose-500", 
+    bg: "bg-rose-100"
   },
   {
-    id: 'moch',
-    name: 'MOCH Cafe and Bistro',
-    type: 'Restaurant',
-    category: 'Restaurant',
-    walkTime: 14,
-    description: 'Cozy dining spot with great ambiance.',
+    id: 8,
+    name: "Burnham Park",
+    type: "Attraction",
+    distance: "4.5km",
+    time: "15 min drive",
+    mode: "drive",
+    coords: [16.41243132638714, 120.59297957699249] as [number, number],
+    icon: Trees,
+    color: "text-emerald-600",
+    bg: "bg-emerald-100"
   },
   {
-    id: 'burnham',
-    name: 'Burnham Park',
-    type: 'Park',
-    category: 'Park',
-    driveTime: 10,
-    description: 'The heart of Baguio. Boating, biking, and walking.',
+    id: 9,
+    name: "SM Baguio City",
+    type: "Shopping",
+    distance: "5.2km",
+    time: "20 min drive",
+    mode: "drive",
+    coords: [16.408975375642115, 120.599740811087] as [number, number],
+    icon: ShoppingBag,
+    color: "text-sky-500",
+    bg: "bg-sky-100"
   },
   {
-    id: 'smbaguio',
-    name: 'SM City Baguio',
-    type: 'Supermall',
-    category: 'Mall',
-    driveTime: 12,
-    description: 'Major shopping, dining, and cinema complex.',
-  },
+      id: 10,
+      name: "Jeepney Station",
+      type: "Transport",
+      distance: "100m",
+      time: "1 min walk",
+      mode: "walk",
+      coords: [16.388942121274752, 120.5757864742171] as [number, number],
+      icon: Bus,
+      color: "text-emerald-500",
+      bg: "bg-emerald-100"
+  }
 ]
 
-const getIcon = (type: PlaceType) => {
-  switch (type) {
-    case 'Minimart': return <Store className="w-5 h-5" />
-    case 'Convenience': return <Coffee className="w-5 h-5" />
-    case 'Pet': return <Cat className="w-5 h-5" />
-    case 'Gym': return <Dumbbell className="w-5 h-5" />
-    case 'Supermarket': return <ShoppingCart className="w-5 h-5" />
-    case 'Restaurant': return <Utensils className="w-5 h-5" />
-    case 'Park': return <Trees className="w-5 h-5" />
-    case 'Mall': return <ShoppingBag className="w-5 h-5" />
-    case 'Police': return <Shield className="w-5 h-5" />
-    default: return <MapPin className="w-5 h-5" />
-  }
-}
-
 export function LocationMap() {
-  const [selectedPlace, setSelectedPlace] = useState<Place>(PLACES[0])
-  const [isInteracting, setIsInteracting] = useState(false)
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLDivElement>(null) // Ref for the scrollable list
+  const [activeLandmark, setActiveLandmark] = useState<[number, number] | null>(null)
+  const [activeId, setActiveId] = useState<number | null>(null)
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
-  const blockObserverRef = useRef(false)
-  const [canScrollPrev, setCanScrollPrev] = useState(false)
-  const [canScrollNext, setCanScrollNext] = useState(true)
 
-  const checkScrollEdge = useCallback(() => {
-    if (scrollRef.current) {
-      const isMobile = window.innerWidth < 1024
-      if (isMobile) {
-        setCanScrollPrev(scrollRef.current.scrollLeft > 20)
-        setCanScrollNext(
-          scrollRef.current.scrollLeft < (scrollRef.current.scrollWidth - scrollRef.current.offsetWidth - 20)
-        )
-      } else {
-        setCanScrollPrev(scrollRef.current.scrollTop > 20)
-        setCanScrollNext(
-          scrollRef.current.scrollTop < (scrollRef.current.scrollHeight - scrollRef.current.offsetHeight - 20)
-        )
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    const el = scrollRef.current
-    if (el) {
-      el.addEventListener('scroll', checkScrollEdge)
-      window.addEventListener('resize', checkScrollEdge)
-      // Initial check
-      checkScrollEdge()
-      return () => {
-        el.removeEventListener('scroll', checkScrollEdge)
-        window.removeEventListener('resize', checkScrollEdge)
-      }
-    }
-  }, [checkScrollEdge])
-
-  const scrollToCard = (index: number) => {
-    if (scrollRef.current) {
-      const isMobile = window.innerWidth < 1024
-      if (isMobile) {
-        const containerWidth = scrollRef.current.offsetWidth
-        const cardWidth = containerWidth * 0.85 + 24
-        scrollRef.current.scrollTo({
-          left: index * cardWidth,
-          behavior: 'smooth'
-        })
-      } else {
-        const cards = scrollRef.current.querySelectorAll('.place-card')
-        const target = cards[index] as HTMLElement
-        if (target) {
-          scrollRef.current.scrollTo({
-            top: target.offsetTop - 100,
-            behavior: 'smooth'
-          })
-        }
-      }
-    }
-  }
-
-  const navigate = (direction: 1 | -1) => {
-    const currentIndex = PLACES.findIndex(p => p.id === selectedPlace.id)
-    const nextIndex = Math.max(0, Math.min(PLACES.length - 1, currentIndex + direction))
-    if (nextIndex !== currentIndex) {
-      selectPlaceManually(PLACES[nextIndex], nextIndex)
-    }
-  }
-
-  const selectPlaceManually = (place: Place, index: number) => {
-    setIsInteracting(true)
-    blockObserverRef.current = true
-    setSelectedPlace(place)
-    scrollToCard(index)
-    setTimeout(() => {
-      blockObserverRef.current = false
-    }, 800)
-  }
-
-  useEffect(() => {
-    if (isInteracting) {
-      if (timerRef.current) clearInterval(timerRef.current)
-      return
-    }
-    timerRef.current = setInterval(() => {
-      const currentIndex = PLACES.findIndex(p => p.id === selectedPlace.id)
-      const nextIndex = (currentIndex + 1) % PLACES.length
-      scrollToCard(nextIndex)
-    }, 5000)
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current)
-    }
-  }, [isInteracting, selectedPlace.id])
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (blockObserverRef.current) return
-        const visible = entries
-          .filter(e => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0]
-        if (visible) {
-          const id = visible.target.getAttribute('data-id')
-          const place = PLACES.find(p => p.id === id)
-          if (place && place.id !== selectedPlace.id) {
-            setSelectedPlace(place)
-          }
-        }
-      },
+  useGSAP(() => {
+    // 1. Reveal Map Card
+    gsap.fromTo(".location-card", 
+      { y: 50, opacity: 0 },
       {
-        threshold: [0.1, 0.5, 0.8],
-        root: scrollRef.current,
-        rootMargin: window.innerWidth < 1024 ? '0px -15% 0px -15%' : '-20% 0px -60% 0px'
+        y: 0,
+        opacity: 1,
+        duration: 1,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: "top 85%", 
+        },
+        clearProps: "all" 
       }
-    )
-    const cards = scrollRef.current?.querySelectorAll('.place-card')
-    cards?.forEach(card => observer.observe(card))
-    return () => observer.disconnect()
-  }, [selectedPlace.id])
+    );
+
+    // 2. Stagger Landmarks List
+    gsap.fromTo(".landmark-card", 
+      { x: 30, opacity: 0 },
+      {
+        x: 0,
+        opacity: 1,
+        duration: 0.5,
+        stagger: 0.08,
+        delay: 0.3,
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: "top 85%",
+        },
+        clearProps: "all"
+      }
+    );
+  }, { scope: containerRef })
+
+  // --- AUTO PLAY LOGIC ---
+  useEffect(() => {
+    if (!isAutoPlaying) return;
+
+    timerRef.current = setInterval(() => {
+        // Find current index, if none selected start at -1 (so next is 0)
+        const currentIndex = activeId 
+            ? LANDMARKS.findIndex(l => l.id === activeId)
+            : -1;
+        
+        // Calculate next index
+        const nextIndex = (currentIndex + 1) % LANDMARKS.length;
+        const nextLandmark = LANDMARKS[nextIndex];
+
+        // Update state
+        setActiveId(nextLandmark.id);
+        setActiveLandmark(nextLandmark.coords);
+    }, 4000); // 4 seconds per slide
+
+    return () => {
+        if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isAutoPlaying, activeId]);
+
+  // --- AUTO SCROLL LOGIC ---
+  // When activeId changes (either by auto-play or click), scroll it into view
+  useEffect(() => {
+      if (activeId && listRef.current) {
+          const activeCard = listRef.current.querySelector(`[data-id="${activeId}"]`);
+          if (activeCard) {
+              activeCard.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'nearest', // Scrolls just enough to bring it into view
+              });
+          }
+      }
+  }, [activeId]);
+
+  // Handle explicit user interactions
+  const handleInteraction = () => {
+      setIsAutoPlaying(false);
+      if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+      }
+  }
+
+  const handleLandmarkClick = (landmark: typeof LANDMARKS[0]) => {
+      handleInteraction();
+      setActiveLandmark(landmark.coords)
+      setActiveId(landmark.id)
+  }
 
   return (
-    <section id="location" className="py-24 bg-[#fafdfc] overflow-hidden">
-      <div className="container mx-auto px-6">
-        <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-12">
-          <div className="space-y-4">
-            <motion.h2
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              className="text-4xl md:text-5xl font-black text-emerald-950 tracking-tighter"
-            >
-              Explore Baguio
-            </motion.h2>
-            <p className="text-gray-500 max-w-xl font-medium text-balance">
-              Everything you need is just around the corner. Discover local favorites and essential stops near Globit Transient.
-            </p>
-          </div>
-          <div className="hidden md:flex gap-2">
-            <Badge className="bg-emerald-600/10 text-emerald-700 border-0 rounded-xl px-4 py-1.5 font-bold shadow-none">
-              {PLACES.length} Nearby Spots
-            </Badge>
-          </div>
+    <section ref={containerRef} className="py-16 md:py-24 bg-gray-50 overflow-hidden relative">
+      {/* Decorative blobs */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-100/50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-100/50 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3 pointer-events-none" />
+
+      <div className="container mx-auto px-4 md:px-6 relative z-10">
+        
+        {/* Header */}
+        <div className="text-center mb-10 max-w-2xl mx-auto">
+           <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight">
+             Connected Convenience
+           </h2>
+           <p className="text-gray-500 text-lg md:text-xl">
+             Everything you need is just a few steps away.
+           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          <div className="lg:col-span-8 order-1 lg:order-2 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-emerald-900/10 border-8 border-white aspect-video lg:aspect-auto lg:h-[700px] relative bg-emerald-50">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={selectedPlace.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.4 }}
-                className="w-full h-full"
-              >
-                <iframe
-                  src={`https://maps.google.com/maps?q=${encodeURIComponent(selectedPlace.name + " Baguio City")}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0, filter: 'grayscale(0.1) contrast(1.1)' }}
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  title={`Map showing ${selectedPlace.name}`}
-                />
-              </motion.div>
-            </AnimatePresence>
+        <div className="flex flex-col lg:flex-row gap-6 h-[800px] lg:h-[600px]">
+            
+            {/* Map Container */}
+            <div className="location-card w-full lg:w-2/3 h-[400px] lg:h-full rounded-[32px] overflow-hidden shadow-2xl border-4 border-white relative z-10 order-1 lg:order-1 flex-shrink-0">
+                 <LeafletMap 
+                    center={GLOBIT_POSITION} 
+                    zoom={ZOOM_LEVEL} 
+                    activeLandmark={activeLandmark}
+                    activeId={activeId}
+                    landmarks={LANDMARKS}
+                    setActiveId={setActiveId}
+                    setActiveLandmark={setActiveLandmark}
+                    onUserInteraction={handleInteraction}
+                 />
 
-            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 hidden md:block z-20">
-              <motion.div
-                layoutId="map-pill"
-                className="bg-emerald-950/90 backdrop-blur-xl px-8 py-5 rounded-[2rem] text-white border border-white/20 shadow-2xl flex items-center gap-6 min-w-[500px]"
-              >
-                <div className="w-16 h-16 bg-emerald-600 rounded-2xl flex items-center justify-center shrink-0 shadow-lg">
-                  {getIcon(selectedPlace.category)}
+                 {/* Overlay Gradient on Map Bottom (Mobile) */}
+                 <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-black/20 to-transparent pointer-events-none lg:hidden" />
+            </div>
+
+            {/* Landmarks List - Scrollable */}
+            <div className="w-full lg:w-1/3 flex flex-col gap-4 order-2 lg:order-2 h-full min-h-0">
+                
+                {/* Scrollable Container with Ref */}
+                <div 
+                    ref={listRef}
+                    className="flex-1 overflow-y-auto pr-2 -mr-2 space-y-3 pb-4 scroll-smooth scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent"
+                >
+                    {LANDMARKS.map((landmark) => (
+                        <button 
+                            key={landmark.id}
+                            data-id={landmark.id} // Added data attribute for querySelector
+                            onClick={() => handleLandmarkClick(landmark)}
+                            className={`landmark-card w-full group flex items-center p-4 rounded-2xl border transition-all duration-300 text-left relative overflow-hidden ${
+                                activeId === landmark.id 
+                                ? "bg-emerald-50 border-emerald-500 shadow-md scale-[1.02]" 
+                                : "bg-white border-gray-100 shadow-sm hover:shadow-md hover:border-emerald-200"
+                            }`}
+                        >
+                            {/* Active Indicator */}
+                            {activeId === landmark.id && (
+                                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-500" />
+                            )}
+
+                            {/* Icon */}
+                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 mr-4 transition-colors ${landmark.bg} ${landmark.color}`}>
+                                <landmark.icon size={22} />
+                            </div>
+
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                                <h4 className={`font-bold truncate transition-colors ${activeId === landmark.id ? 'text-emerald-700' : 'text-gray-900 group-hover:text-emerald-600'}`}>
+                                    {landmark.name}
+                                </h4>
+                                <div className="flex items-center gap-3 mt-1.5">
+                                    <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
+                                        <div className="bg-gray-100 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                            {landmark.mode === 'walk' ? <Footprints size={10} /> : <Car size={10} />}
+                                            {landmark.time}
+                                        </div>
+                                    </div>
+                                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
+                                        {landmark.distance}
+                                    </span>
+                                </div>
+                            </div>
+                        </button>
+                    ))}
                 </div>
-                <div className="flex-1">
-                  <h4 className="text-xl font-black">{selectedPlace.name}</h4>
-                  <p className="text-emerald-100/60 text-sm font-medium">{selectedPlace.description}</p>
-                </div>
-                <div className="text-right shrink-0">
-                  {selectedPlace.walkTime ? (
-                    <div className="flex items-center gap-2 text-emerald-400 font-bold">
-                      <Footprints className="w-5 h-5" /> {selectedPlace.walkTime}m
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 text-orange-400 font-bold">
-                      <Car className="w-5 h-5" /> {selectedPlace.driveTime}m
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            </div>
-          </div>
 
-          <div className="lg:col-span-4 order-2 lg:order-1 relative lg:h-[700px]">
-            {/* Mobile Navigation Buttons (Left/Right) - Center Overlay */}
-            <div className="absolute inset-y-0 left-2 flex items-center lg:hidden z-20 pointer-events-none">
-              <AnimatePresence>
-                {canScrollPrev && (
-                  <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="pointer-events-auto">
-                    <Button variant="outline" size="icon" onClick={() => navigate(-1)} className="rounded-full h-12 w-12 bg-white/90 backdrop-blur shadow-xl border-emerald-100 text-emerald-600 hover:bg-emerald-50">
-                      <ChevronLeft className="w-6 h-6" />
-                    </Button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                {/* Get Directions CTA */}
+                <a 
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${GLOBIT_POSITION[0]},${GLOBIT_POSITION[1]}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 w-full flex items-center justify-center gap-2 bg-gray-900 text-white font-bold py-4 rounded-2xl hover:bg-gray-800 transition-all hover:scale-[1.02] shadow-xl shadow-gray-200/50"
+                >
+                    <Navigation size={18} />
+                    Get Directions to Transient
+                </a>
             </div>
 
-            <div className="absolute inset-y-0 right-2 flex items-center lg:hidden z-20 pointer-events-none">
-              <AnimatePresence>
-                {canScrollNext && (
-                  <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="pointer-events-auto">
-                    <Button variant="outline" size="icon" onClick={() => navigate(1)} className="rounded-full h-12 w-12 bg-white/90 backdrop-blur shadow-xl border-emerald-100 text-emerald-600 hover:bg-emerald-50">
-                      <ChevronRight className="w-6 h-6" />
-                    </Button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Desktop Navigation Buttons (Up/Down) */}
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 hidden lg:flex flex-col gap-2 z-20 pointer-events-none">
-              <AnimatePresence>
-                {canScrollPrev && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="pointer-events-auto">
-                    <Button variant="outline" size="icon" onClick={() => navigate(-1)} className="rounded-full h-12 w-12 bg-white/80 backdrop-blur shadow-xl border-emerald-100 text-emerald-600 hover:bg-emerald-50">
-                      <ChevronUp className="w-6 h-6" />
-                    </Button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 hidden lg:flex flex-col gap-2 z-20 pointer-events-none">
-              <AnimatePresence>
-                {canScrollNext && (
-                  <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="pointer-events-auto">
-                    <Button variant="outline" size="icon" onClick={() => navigate(1)} className="rounded-full h-12 w-12 bg-white/80 backdrop-blur shadow-xl border-emerald-100 text-emerald-600 hover:bg-emerald-50">
-                      <ChevronDown className="w-6 h-6" />
-                    </Button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#fafdfc] via-[#fafdfc]/80 to-transparent z-10 hidden lg:block pointer-events-none" />
-            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#fafdfc] via-[#fafdfc]/80 to-transparent z-10 hidden lg:block pointer-events-none" />
-
-            <div
-              ref={scrollRef}
-              onMouseEnter={() => setIsInteracting(true)}
-              onMouseLeave={() => setIsInteracting(false)}
-              onTouchStart={() => setIsInteracting(true)}
-              onTouchEnd={() => setIsInteracting(false)}
-              className={cn(
-                "flex lg:flex-col gap-6 overflow-x-auto lg:overflow-y-auto snap-x lg:snap-y snap-mandatory scrollbar-none pb-8 lg:pb-32 lg:h-full px-2 lg:pt-20",
-                "scroll-smooth touch-pan-x lg:touch-pan-y"
-              )}
-            >
-              {PLACES.map((place, idx) => {
-                const isActive = selectedPlace.id === place.id
-                return (
-                  <motion.div
-                    key={place.id}
-                    data-id={place.id}
-                    onClick={() => selectPlaceManually(place, idx)}
-                    whileTap={{ scale: 0.98 }}
-                    className={cn(
-                      "place-card shrink-0 snap-center cursor-pointer transition-all duration-500 rounded-[2.5rem] p-6 lg:p-10",
-                      "w-[85vw] md:w-[400px] lg:w-full",
-                      isActive
-                        ? "bg-white shadow-2xl shadow-emerald-900/10 border-2 border-emerald-500"
-                        : "bg-white/50 border border-emerald-950/5 grayscale opacity-60 hover:grayscale-0 hover:opacity-100"
-                    )}
-                  >
-                    <div className="flex items-start justify-between mb-6">
-                      <div className={cn(
-                        "w-14 h-14 rounded-2xl flex items-center justify-center transition-colors duration-500",
-                        isActive ? "bg-emerald-600 text-white shadow-lg" : "bg-gray-100 text-gray-400"
-                      )}>
-                        {getIcon(place.category)}
-                      </div>
-                      {isActive && (
-                        <motion.div layoutId="active-dot" className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-[10px] uppercase font-black text-emerald-600/50 tracking-[0.2em]">{place.type}</p>
-                      <h3 className={cn("text-2xl lg:text-3xl font-black tracking-tighter leading-none transition-colors duration-500", isActive ? "text-emerald-950" : "text-gray-400")}>{place.name}</h3>
-                      <p className={cn("text-sm lg:text-base font-medium transition-colors duration-500 text-balance", isActive ? "text-gray-600" : "text-gray-300")}>{place.description}</p>
-                    </div>
-                    <div className="mt-8 pt-6 border-t border-emerald-900/5">
-                      <div className="flex gap-2">
-                        {place.walkTime && (
-                          <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50 border-0 rounded-lg px-3 py-1 flex gap-1.5 items-center font-bold">
-                            <Footprints className="w-3.5 h-3.5" /> {place.walkTime}m
-                          </Badge>
-                        )}
-                        {place.driveTime && (
-                          <Badge className="bg-orange-50 text-orange-700 hover:bg-orange-50 border-0 rounded-lg px-3 py-1 flex gap-1.5 items-center font-bold">
-                            <Car className="w-3.5 h-3.5" /> {place.driveTime}m
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
-                )
-              })}
-            </div>
-          </div>
         </div>
       </div>
     </section>
