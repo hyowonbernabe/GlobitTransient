@@ -9,13 +9,13 @@ interface AnalyticsChartsProps {
 }
 
 export function AnalyticsCharts({ revenueData, occupancyData }: AnalyticsChartsProps) {
-  
-  const formatCurrency = (value: number) => 
+
+  const formatCurrency = (value: number) =>
     new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', minimumFractionDigits: 0 }).format(value)
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-      
+
       {/* Revenue Chart */}
       <Card>
         <CardHeader>
@@ -27,12 +27,12 @@ export function AnalyticsCharts({ revenueData, occupancyData }: AnalyticsChartsP
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={revenueData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis 
-                  dataKey="name" 
-                  stroke="#888888" 
-                  fontSize={12} 
-                  tickLine={false} 
-                  axisLine={false} 
+                <XAxis
+                  dataKey="name"
+                  stroke="#888888"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
                 />
                 <YAxis
                   stroke="#888888"
@@ -41,10 +41,10 @@ export function AnalyticsCharts({ revenueData, occupancyData }: AnalyticsChartsP
                   axisLine={false}
                   tickFormatter={(value) => `₱${value / 1000}k`}
                 />
-                <Tooltip 
-                    cursor={{ fill: 'transparent' }}
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                    formatter={(value: number) => [formatCurrency(value), 'Revenue']}
+                <Tooltip
+                  cursor={{ fill: 'transparent' }}
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  formatter={(value) => [formatCurrency(value as number), 'Revenue']}
                 />
                 <Bar dataKey="total" fill="#059669" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -64,18 +64,18 @@ export function AnalyticsCharts({ revenueData, occupancyData }: AnalyticsChartsP
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={occupancyData}>
                 <defs>
-                    <linearGradient id="colorBookings" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                    </linearGradient>
+                  <linearGradient id="colorBookings" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                  </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis 
-                  dataKey="name" 
-                  stroke="#888888" 
-                  fontSize={12} 
-                  tickLine={false} 
-                  axisLine={false} 
+                <XAxis
+                  dataKey="name"
+                  stroke="#888888"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
                 />
                 <YAxis
                   stroke="#888888"
@@ -83,16 +83,16 @@ export function AnalyticsCharts({ revenueData, occupancyData }: AnalyticsChartsP
                   tickLine={false}
                   axisLine={false}
                 />
-                <Tooltip 
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                <Tooltip
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 />
-                <Area 
-                    type="monotone" 
-                    dataKey="bookings" 
-                    stroke="#3b82f6" 
-                    fillOpacity={1} 
-                    fill="url(#colorBookings)" 
-                    strokeWidth={2}
+                <Area
+                  type="monotone"
+                  dataKey="bookings"
+                  stroke="#3b82f6"
+                  fillOpacity={1}
+                  fill="url(#colorBookings)"
+                  strokeWidth={2}
                 />
               </AreaChart>
             </ResponsiveContainer>
