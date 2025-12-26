@@ -13,7 +13,7 @@ export function Hero() {
       {/* Background Image Placeholder */}
       <div className="absolute inset-0 z-0">
         <img
-          src="/assets/images/placeholder.png"
+          src="/assets/images/baguio-city-landscape-view.jpg"
           alt="Baguio City View"
           className="w-full h-full object-cover opacity-40"
         />

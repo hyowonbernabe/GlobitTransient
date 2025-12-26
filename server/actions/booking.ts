@@ -5,6 +5,7 @@ import { createBookingSchema } from "@/lib/validations/booking"
 import { calculateBookingPrice } from "@/lib/pricing"
 import { notifyAdmins } from "@/server/actions/notification"
 import { z } from "zod"
+import { cookies } from "next/headers"
 
 export async function createBooking(data: z.infer<typeof createBookingSchema>) {
   const result = createBookingSchema.safeParse(data)
@@ -15,16 +16,12 @@ export async function createBooking(data: z.infer<typeof createBookingSchema>) {
   const { unitId, checkIn, checkOut, guestName, guestMobile, guestEmail, ...rest } = result.data
 
   try {
-    // UPDATED: Only check against CONFIRMED bookings. Pending is allowed.
     const conflictingBooking = await prisma.booking.findFirst({
       where: {
         unitId,
-        status: { in: ['CONFIRMED'] }, 
+        status: { in: ['CONFIRMED'] },
         OR: [
-          { 
-            checkIn: { lte: checkOut }, 
-            checkOut: { gte: checkIn } 
-          }
+          { checkIn: { lte: checkOut }, checkOut: { gte: checkIn } }
         ]
       }
     })
@@ -33,7 +30,6 @@ export async function createBooking(data: z.infer<typeof createBookingSchema>) {
       return { error: "Sorry, these dates are already taken." }
     }
 
-    // Car Check: Same logic, only confirmed cars block.
     if (rest.hasCar) {
       const carBooking = await prisma.booking.findFirst({
         where: {
@@ -84,10 +80,25 @@ export async function createBooking(data: z.infer<typeof createBookingSchema>) {
       })
     }
 
+    // === AGENT ATTRIBUTION LOGIC ===
+    let agentId = null;
+    const cookieStore = await cookies(); // Fix: await cookies() in Next.js 15
+    const agentCode = cookieStore.get('globit_agent_ref')?.value;
+
+    if (agentCode) {
+      const agent = await prisma.user.findUnique({
+        where: { agentCode }
+      });
+      if (agent && agent.role === 'AGENT') {
+        agentId = agent.id;
+      }
+    }
+
     const booking = await prisma.booking.create({
       data: {
         unitId,
         userId: user.id,
+        agentId, // Attach Agent here
         checkIn,
         checkOut,
         adults: rest.adults,

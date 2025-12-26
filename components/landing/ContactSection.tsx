@@ -9,9 +9,9 @@ export function ContactSection() {
             
             {/* Image Side */}
             <div className="relative bg-emerald-800 min-h-[300px] flex items-end justify-center overflow-hidden">
-               <div className="absolute inset-0 bg-[url('/assets/images/placeholder.png')] bg-cover bg-center opacity-20 mix-blend-overlay" />
+               <div className="absolute inset-0 bg-[url('/assets/images/baguio-city-landscape-view.jpg')] bg-cover bg-center opacity-20 mix-blend-overlay" />
                <img 
-                 src="/assets/images/placeholder.png" 
+                 src="/assets/images/baguio-city-landscape-view.jpg" 
                  alt="Owner of Globit Transient" 
                  className="relative z-10 w-64 md:w-80 object-contain translate-y-4 hover:scale-105 transition-transform duration-500"
                />

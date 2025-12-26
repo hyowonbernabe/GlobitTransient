@@ -86,38 +86,39 @@ model Unit {
 }
 
 model Booking {
-  id             String    @id @default(cuid())
+  id                String    @id @default(cuid())
   
-  unitId         String
-  unit           Unit      @relation(fields: [unitId], references: [id])
-  userId         String
-  user           User      @relation("ClientBookings", fields: [userId], references: [id])
-  agentId        String?
-  agent          User?     @relation("AgentReferrals", fields: [agentId], references: [id])
+  unitId            String
+  unit              Unit      @relation(fields: [unitId], references: [id])
+  userId            String
+  user              User      @relation("ClientBookings", fields: [userId], references: [id])
+  agentId           String?
+  agent             User?     @relation("AgentReferrals", fields: [agentId], references: [id])
 
-  checkIn        DateTime
-  checkOut       DateTime
+  checkIn           DateTime
+  checkOut          DateTime
   
-  adults         Int
-  kids           Int
-  toddlers       Int
-  hasPWD         Boolean   @default(false)
+  adults            Int
+  kids              Int
+  toddlers          Int
+  hasPWD            Boolean   @default(false)
   
-  hasCar         Boolean   @default(false)
-  hasPet         Boolean   @default(false)
+  hasCar            Boolean   @default(false)
+  hasPet            Boolean   @default(false)
   
-  totalPrice     Int      
-  downpayment    Int
-  balance        Int
+  totalPrice        Int      
+  downpayment       Int
+  balance           Int
   
-  status         BookingStatus @default(PENDING)
-  paymentStatus  PaymentStatus @default(UNPAID)
+  status            BookingStatus @default(PENDING)
+  paymentStatus     PaymentStatus @default(UNPAID)
   
-  notes          String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  checkoutSessionId String?   @unique // NEW: Track PayMongo Session
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
   
-  commissions    Commission[]
+  commissions       Commission[]
 
   @@index([checkIn, checkOut])
   @@index([userId])
@@ -137,15 +138,13 @@ model Commission {
   createdAt     DateTime @default(now())
 }
 
-// --- Notification System ---
-
 model Notification {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
   message   String
-  type      String   @default("INFO") // INFO, SUCCESS, WARNING, ERROR
+  type      String   @default("INFO") 
   isRead    Boolean  @default(false)
   link      String?
   createdAt DateTime @default(now())
@@ -153,27 +152,23 @@ model Notification {
   @@index([userId])
 }
 
-// --- Audit & Security ---
-
 model AuditLog {
   id         String   @id @default(cuid())
   userId     String
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  action     String   // e.g. "UPDATE_UNIT", "APPROVE_BOOKING"
-  entityType String   // e.g. "UNIT", "BOOKING"
-  entityId   String?  // The ID of the item being changed
-  details    String?  // JSON or text description of change
+  action     String   
+  entityType String   
+  entityId   String?  
+  details    String?  
   createdAt  DateTime @default(now())
 
   @@index([userId])
   @@index([action])
 }
 
-// --- Reviews ---
-
 model Review {
   id        String   @id @default(cuid())
-  rating    Int      // 1-5
+  rating    Int      
   comment   String?  @db.Text
   
   unitId    String
@@ -187,7 +182,14 @@ model Review {
   @@index([unitId])
 }
 
-// --- NextAuth Models ---
+model KnowledgeSnippet {
+  id        String    @id @default(cuid())
+  content   String    
+  category  String    
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
 model Account {
   id                 String  @id @default(cuid())
