@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Calendar, Users, Home, LogOut, Settings, DollarSign, Menu, X, BookOpen, ShieldAlert, BrainCircuit, Star } from 'lucide-react'
+import { LayoutDashboard, Calendar, Users, Home, LogOut, Settings, DollarSign, Menu, X, BookOpen, ShieldAlert, BrainCircuit, Star, ClipboardList } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { handleSignOut } from '@/server/actions/auth'
@@ -15,6 +15,7 @@ export function AdminSidebar() {
 
   const links = [
     { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/admin/operations', label: 'Daily Ops', icon: ClipboardList },
     { href: '/admin/bookings', label: 'Bookings', icon: BookOpen },
     { href: '/admin/calendar', label: 'Calendar', icon: Calendar },
     { href: '/admin/units', label: 'Unit Management', icon: Home },
@@ -40,16 +41,16 @@ export function AdminSidebar() {
         {links.map((link) => {
           const Icon = link.icon
           const isActive = pathname === link.href
-          
+
           return (
-            <Link 
-              key={link.href} 
+            <Link
+              key={link.href}
               href={link.href}
               onClick={() => setIsOpen(false)} // Close on mobile click
               className={cn(
                 "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                isActive 
-                  ? "bg-emerald-800 text-white shadow-sm" 
+                isActive
+                  ? "bg-emerald-800 text-white shadow-sm"
                   : "text-emerald-100 hover:bg-emerald-800/50 hover:text-white"
               )}
             >
@@ -80,17 +81,17 @@ export function AdminSidebar() {
           <span>Admin</span>
         </div>
         <div className="flex items-center gap-2">
-            <NotificationBell />
-            <Button variant="ghost" size="icon" onClick={() => setIsOpen(!isOpen)} className="text-white hover:bg-emerald-800">
+          <NotificationBell />
+          <Button variant="ghost" size="icon" onClick={() => setIsOpen(!isOpen)} className="text-white hover:bg-emerald-800">
             {isOpen ? <X /> : <Menu />}
-            </Button>
+          </Button>
         </div>
       </div>
 
       {/* Mobile Overlay Sidebar */}
       {isOpen && (
         <div className="md:hidden fixed inset-0 z-40 bg-emerald-900 flex flex-col pt-16 animate-in slide-in-from-left-full duration-200">
-           <SidebarContent />
+          <SidebarContent />
         </div>
       )}
 
