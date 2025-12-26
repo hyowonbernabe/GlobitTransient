@@ -3,10 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CheckCircle, Clock, DollarSign, Users } from 'lucide-react'
 import { getRevenueData, getOccupancyData } from '@/server/actions/analytics'
 import { AnalyticsCharts } from '@/components/admin/AnalyticsCharts'
+import { RecentBookings } from '@/components/admin/RecentBookings'
 
 export const dynamic = 'force-dynamic'
 
-async function getStats() {
+async function getDashboardData() {
   const pendingCount = await prisma.booking.count({
     where: { status: 'PENDING' }
   })
@@ -38,16 +39,47 @@ async function getStats() {
     }
   })
 
+  // Fetch Recent Bookings
+  const recentBookings = await prisma.booking.findMany({
+    take: 5,
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      totalPrice: true,
+      status: true,
+      createdAt: true,
+      unit: {
+        select: { name: true }
+      },
+      user: {
+        select: { name: true }
+      }
+    }
+  })
+
+  // Format bookings for the component
+  const formattedBookings = recentBookings.map(b => ({
+    id: b.id,
+    guestName: b.user.name,
+    unitName: b.unit.name,
+    totalPrice: b.totalPrice,
+    status: b.status,
+    createdAt: b.createdAt
+  }))
+
   return {
-    pending: pendingCount,
-    confirmed: confirmedCount,
-    revenue: revenueData._sum.totalPrice || 0,
-    guests: (guestData._sum.adults || 0) + (guestData._sum.kids || 0)
+    stats: {
+      pending: pendingCount,
+      confirmed: confirmedCount,
+      revenue: revenueData._sum.totalPrice || 0,
+      guests: (guestData._sum.adults || 0) + (guestData._sum.kids || 0)
+    },
+    recentBookings: formattedBookings
   }
 }
 
 export default async function DashboardPage() {
-  const stats = await getStats()
+  const { stats, recentBookings } = await getDashboardData()
   const revenueChartData = await getRevenueData()
   const occupancyChartData = await getOccupancyData()
   
@@ -118,6 +150,12 @@ export default async function DashboardPage() {
         revenueData={revenueChartData} 
         occupancyData={occupancyChartData} 
       />
+
+      {/* Recent Activity Table */}
+      <div className="mt-8">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Bookings</h2>
+        <RecentBookings bookings={recentBookings} />
+      </div>
       
     </div>
   )
