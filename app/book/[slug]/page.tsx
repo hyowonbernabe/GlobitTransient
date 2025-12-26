@@ -15,8 +15,12 @@ interface PageProps {
   params: Promise<{ slug: string }>
 }
 
-async function getUnitWithReviews(slug: string) {
-  // Use temporary any cast until Prisma client is regenerated with new models
+async function getUnitDetails(slug: string) {
+  // 1. Fetch Unit with Reviews AND Confirmed Bookings
+  // Note: We only care about CONFIRMED bookings for blocking dates visually.
+  // PENDING bookings are still technically "open" in our new logic, 
+  // though you might want to warn users. For now, we only block hard confirmed slots.
+  
   const unit = await (prisma as any).unit.findUnique({
     where: { slug },
     include: {
@@ -27,6 +31,16 @@ async function getUnitWithReviews(slug: string) {
             select: { name: true }
           }
         }
+      },
+      bookings: {
+        where: {
+          status: 'CONFIRMED',
+          checkOut: { gte: new Date() } // Only future/current bookings
+        },
+        select: {
+          checkIn: true,
+          checkOut: true
+        }
       }
     }
   })
@@ -35,11 +49,17 @@ async function getUnitWithReviews(slug: string) {
 
 export default async function UnitPage(props: PageProps) {
   const params = await props.params;
-  const unit = await getUnitWithReviews(params.slug)
+  const unit = await getUnitDetails(params.slug)
 
   if (!unit) {
     return notFound()
   }
+
+  // Transform bookings into DateRange objects for the Client Component
+  const blockedDates = unit.bookings.map((b: any) => ({
+    from: b.checkIn,
+    to: b.checkOut
+  }))
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
@@ -86,6 +106,7 @@ export default async function UnitPage(props: PageProps) {
                    maxPax: unit.maxPax,
                    hasCarConfig: true
                  }}
+                 blockedDates={blockedDates}
                />
             </div>
 

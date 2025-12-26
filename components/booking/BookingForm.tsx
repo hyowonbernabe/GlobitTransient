@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { format, differenceInCalendarDays } from "date-fns"
-import { Calendar as CalendarIcon, Users, Info, Car, CheckCircle, AlertCircle, ArrowLeft, Loader2 } from "lucide-react"
+import { Calendar as CalendarIcon, Car, AlertCircle, ArrowLeft, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -22,15 +22,21 @@ import { createBooking } from "@/server/actions/booking"
 import { useRouter } from "next/navigation"
 
 interface UnitPricing {
-  id: string // Unit ID needed for booking
-  basePrice: number // in centavos
+  id: string
+  basePrice: number
   basePax: number
-  extraPaxPrice: number // in centavos
+  extraPaxPrice: number
   maxPax: number
   hasCarConfig: boolean
 }
 
-export function BookingForm({ pricing }: { pricing: UnitPricing }) {
+// Add blockedDates to props
+interface BookingFormProps {
+  pricing: UnitPricing
+  blockedDates?: DateRange[] 
+}
+
+export function BookingForm({ pricing, blockedDates = [] }: BookingFormProps) {
   const router = useRouter()
   const [step, setStep] = useState<1 | 2>(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -116,6 +122,13 @@ export function BookingForm({ pricing }: { pricing: UnitPricing }) {
     }
   }
 
+  // Combine past dates + confirmed bookings
+  // The 'disabled' prop accepts a Matcher or array of Matchers
+  const disabledDays = [
+    { before: new Date() }, // Past dates
+    ...blockedDates // Future confirmed bookings
+  ]
+
   return (
     <Card className="w-full border-gray-200 shadow-lg lg:sticky lg:top-24">
       <CardHeader className="bg-emerald-900 text-white rounded-t-xl py-4">
@@ -180,7 +193,7 @@ export function BookingForm({ pricing }: { pricing: UnitPricing }) {
                     selected={date}
                     onSelect={setDate}
                     numberOfMonths={2}
-                    disabled={(date) => date < new Date()}
+                    disabled={disabledDays}
                   />
                 </PopoverContent>
               </Popover>
