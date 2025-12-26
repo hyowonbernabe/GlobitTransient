@@ -17,7 +17,19 @@ export async function getSystemContext() {
     }
   })
 
-  // 2. Format Units into Text
+  // 2. Fetch Dynamic Knowledge Base
+  // Use try-catch or cast because table might be empty/new
+  let snippets = []
+  try {
+    snippets = await (prisma as any).knowledgeSnippet.findMany({
+      orderBy: { category: 'asc' }
+    })
+  } catch (e) {
+    // Fallback if table doesn't exist yet or error
+    console.warn("Could not fetch knowledge snippets", e)
+  }
+
+  // 3. Format Units
   const unitText = units.map(u => `
 - Unit: ${u.name}
   - Price: PHP ${u.basePrice / 100} (Good for ${u.basePax} pax)
@@ -27,18 +39,12 @@ export async function getSystemContext() {
   - Details: ${u.description}
 `).join('\n')
 
-  // 3. Static House Rules (Could be DB driven later)
-  const rules = `
-- Check-in: 2:00 PM
-- Check-out: 12:00 PM (Noon)
-- Parking: Strictly 1 slot available (First come first served).
-- Pets: Allowed but must wear diapers.
-- Downpayment: 50% required to confirm. Non-refundable.
-- Location: Near Burnham Park, Baguio City.
-- Contact: 0917 123 4567 / inquire@globit.com
-  `
+  // 4. Format Snippets
+  const knowledgeText = snippets.length > 0 
+    ? snippets.map((s: any) => `- [${s.category}]: ${s.content}`).join('\n')
+    : `- Rules: Check-in 2PM, Check-out 12PM. 50% Downpayment required.` // Default fallback
 
-  // 4. Construct System Prompt
+  // 5. Construct System Prompt
   return `
 You are the friendly and helpful virtual assistant for Globit Transient House in Baguio City.
 Your goal is to help guests choose a room and answer their questions using ONLY the information below.
@@ -46,8 +52,8 @@ Your goal is to help guests choose a room and answer their questions using ONLY 
 ### AVAILABLE UNITS
 ${unitText}
 
-### HOUSE RULES & POLICIES
-${rules}
+### HOUSE RULES & KNOWLEDGE BASE
+${knowledgeText}
 
 ### INSTRUCTIONS
 - Answer concisely and politely.

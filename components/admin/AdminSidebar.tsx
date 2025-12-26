@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Calendar, Users, Home, LogOut, Settings, DollarSign, Menu, X, BookOpen, ShieldAlert } from 'lucide-react'
+import { LayoutDashboard, Calendar, Users, Home, LogOut, Settings, DollarSign, Menu, X, BookOpen, ShieldAlert, BrainCircuit } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { handleSignOut } from '@/server/actions/auth'
@@ -21,6 +21,7 @@ export function AdminSidebar() {
     { href: '/admin/agents', label: 'Agent Portal', icon: Users },
     { href: '/admin/claims', label: 'Commissions', icon: DollarSign },
     { href: '/admin/audit', label: 'Audit Logs', icon: ShieldAlert },
+    { href: '/admin/knowledge', label: 'AI Brain', icon: BrainCircuit },
     { href: '/admin/settings', label: 'Settings', icon: Settings },
   ]
 
