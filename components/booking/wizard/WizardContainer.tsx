@@ -130,7 +130,7 @@ export function WizardContainer({ initialUnits }: WizardContainerProps) {
       <div ref={containerRef} className="min-h-screen bg-gray-50 pb-20">
         {/* Sticky Header */}
         <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-xl border-b border-gray-100 p-4 shadow-sm results-header">
-            <div className="flex justify-between items-center max-w-md mx-auto w-full">
+            <div className="flex justify-between items-center w-full max-w-md md:max-w-6xl mx-auto px-4">
                 <div>
                     <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Your Stay</div>
                     <div className="font-bold text-gray-900 text-sm">
@@ -147,16 +147,18 @@ export function WizardContainer({ initialUnits }: WizardContainerProps) {
         </div>
 
         {/* Scrollable Content */}
-        <div className="p-5 max-w-md mx-auto">
+        <div className="p-5 w-full max-w-md md:max-w-6xl mx-auto">
              <div className="mb-6 mt-2 flex items-center gap-2 opacity-0 top-pick-card translate-y-4">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
                 <div className="text-xs font-bold text-gray-400 tracking-widest uppercase">Recommended</div>
              </div>
              
-             {/* Render Top Picks */}
-             {topPicks.map((unit, idx) => (
-                 <TopPickCard key={unit.id} unit={unit} index={idx} />
-             ))}
+             {/* Render Top Picks - Grid for Desktop */}
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-12">
+                 {topPicks.map((unit, idx) => (
+                     <TopPickCard key={unit.id} unit={unit} index={idx} />
+                 ))}
+             </div>
              
              {/* Render Remaining Units */}
              {others.length > 0 && <StandardUnitList units={others} />}

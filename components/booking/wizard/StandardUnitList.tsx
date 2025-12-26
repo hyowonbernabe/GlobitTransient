@@ -19,7 +19,7 @@ export function StandardUnitList({ units }: StandardUnitListProps) {
         <div className="h-px bg-gray-200 flex-1" />
       </div>
       
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {units.map((unit) => {
             // Determine tags based on slug or DB properties (if available)
             // Using DB properties is safer, but falling back to slug logic for specific requests
@@ -39,7 +39,7 @@ export function StandardUnitList({ units }: StandardUnitListProps) {
             return (
                <div 
                  key={unit.id} 
-                 className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 flex flex-row h-32 standard-list-entry opacity-0 translate-y-8 active:scale-[0.98] transition-transform duration-200"
+                 className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 flex flex-row h-32 standard-list-entry opacity-0 translate-y-8 active:scale-[0.98] transition-transform duration-200 hover:shadow-md"
                >
                   <div className="w-28 relative shrink-0 rounded-xl overflow-hidden bg-gray-100">
                      <Image 
