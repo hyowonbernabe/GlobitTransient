@@ -5,10 +5,11 @@ import { Footer } from '@/components/layout/Footer'
 import { UnitGallery } from '@/components/booking/UnitGallery'
 import { BookingForm } from '@/components/booking/BookingForm'
 import { ReviewSection } from '@/components/reviews/ReviewSection'
-import { Users, Wind, Tv, Bath, Snowflake } from 'lucide-react'
+import { Users, Wind, Tv, Bath, Snowflake, AlertCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Metadata } from 'next'
+import { ParallaxHero } from '@/components/booking/ParallaxHero'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,8 +54,8 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
     }
   }
 
-  const price = new Intl.NumberFormat('en-PH', { 
-    style: 'currency', 
+  const price = new Intl.NumberFormat('en-PH', {
+    style: 'currency',
     currency: 'PHP',
     minimumFractionDigits: 0
   }).format(unit.basePrice / 100)
@@ -83,100 +84,102 @@ export default async function UnitPage(props: PageProps) {
     to: b.checkOut
   }))
 
+  const heroImage = unit.slug === 'big-house' ? '/assets/images/baguio_midground.png' : unit.slug === 'veranda-unit' ? '/assets/images/baguio_background_fog.png' : (unit.images[0] || '/assets/images/placeholder.png')
+
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
+    <div className="min-h-screen bg-[#fcfdfc] font-sans text-emerald-950 flex flex-col">
       <Navbar />
 
-      <main className="flex-1 pb-20">
-        <div className="container mx-auto px-4 py-8">
-          
-          <div className="flex flex-col lg:grid lg:grid-cols-3 gap-8 items-start">
-            
-            <div className="w-full order-1 lg:col-span-2 space-y-8">
-              <div className="space-y-4">
-                <h1 className="text-3xl md:text-4xl font-bold text-emerald-950">{unit.name}</h1>
-                <div className="flex flex-wrap gap-2 text-sm text-gray-600">
-                  <Badge variant="outline" className="px-3 py-1 border-emerald-200 bg-emerald-50 text-emerald-800">
-                    <Users className="w-3 h-3 mr-2" />
-                    Good for {unit.basePax} (Max {unit.maxPax})
+      <main className="flex-1">
+        <ParallaxHero
+          unitId={unit.id}
+          unitName={unit.name}
+          image={heroImage}
+        >
+          <div className="flex flex-col lg:grid lg:grid-cols-3 gap-16 items-start pt-12">
+
+            <div className="w-full lg:col-span-2 space-y-16">
+              <div className="space-y-8">
+                <div className="flex flex-wrap gap-3">
+                  <Badge variant="outline" className="px-5 py-2 rounded-full border-emerald-100 bg-emerald-50 text-emerald-800 font-black text-xs uppercase tracking-widest">
+                    <Users className="w-4 h-4 mr-2" />
+                    Up to {unit.maxPax} Guests
                   </Badge>
-                  {unit.hasOwnCR ? (
-                    <Badge variant="outline" className="px-3 py-1 border-blue-200 bg-blue-50 text-blue-800">
-                      <Bath className="w-3 h-3 mr-2" />
-                      Own CR
-                    </Badge>
-                  ) : (
-                     <Badge variant="outline" className="px-3 py-1 text-gray-500">
-                      Common CR
+                  {unit.hasOwnCR && (
+                    <Badge variant="outline" className="px-5 py-2 rounded-full border-blue-100 bg-blue-50 text-blue-800 font-black text-xs uppercase tracking-widest">
+                      <Bath className="w-4 h-4 mr-2" />
+                      Private Bathroom
                     </Badge>
                   )}
+                </div>
+
+                <div className="prose prose-emerald max-w-none">
+                  <h2 className="text-3xl font-black tracking-tight text-emerald-950 mb-6 text-center lg:text-left">Experience the Space</h2>
+                  <p className="text-xl text-gray-500 font-medium leading-[1.8] whitespace-pre-wrap">
+                    {unit.description}
+                  </p>
                 </div>
               </div>
 
               <UnitGallery images={unit.images} unitName={unit.name} />
-            </div>
 
-            <div className="w-full order-2 lg:order-2 lg:col-span-1 lg:col-start-3 lg:row-start-1 lg:row-span-3">
-               <BookingForm 
-                 pricing={{
-                   id: unit.id,
-                   basePrice: unit.basePrice,
-                   basePax: unit.basePax,
-                   extraPaxPrice: unit.extraPaxPrice,
-                   maxPax: unit.maxPax,
-                   hasCarConfig: true
-                 }}
-                 blockedDates={blockedDates}
-               />
-            </div>
-
-            <div className="w-full order-3 lg:order-3 lg:col-span-2 space-y-12">
-              
-              <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm space-y-6">
-                <div>
-                   <h2 className="text-xl font-bold text-gray-900 mb-3">About this Unit</h2>
-                   <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">
-                     {unit.description}
-                   </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className={`p-8 rounded-[2.5rem] border-2 transition-all ${unit.hasTV ? 'bg-white border-emerald-50 shadow-xl shadow-emerald-900/5' : 'bg-gray-50 border-gray-100 opacity-40'}`}>
+                  <Tv className="w-8 h-8 mb-4 text-emerald-950" />
+                  <p className="font-black text-xl text-emerald-950 uppercase tracking-tighter">Entertainment</p>
+                  <p className="text-gray-500 font-bold">{unit.hasTV ? 'Smart TV Available' : 'No TV included'}</p>
                 </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className={`p-4 rounded-lg border ${unit.hasTV ? 'bg-gray-50 border-gray-200' : 'bg-gray-50/50 border-gray-100 opacity-50'}`}>
-                    <Tv className="w-5 h-5 mb-2 text-gray-700" />
-                    <span className="text-sm font-medium">TV</span>
-                    <span className="block text-xs text-gray-500">{unit.hasTV ? 'Available' : 'Not Included'}</span>
-                  </div>
-                  <div className={`p-4 rounded-lg border ${unit.hasRef ? 'bg-gray-50 border-gray-200' : 'bg-gray-50/50 border-gray-100 opacity-50'}`}>
-                    <Snowflake className="w-5 h-5 mb-2 text-blue-500" />
-                    <span className="text-sm font-medium">Refrigerator</span>
-                    <span className="block text-xs text-gray-500">{unit.hasRef ? 'Available' : 'Not Included'}</span>
-                  </div>
-                  <div className={`p-4 rounded-lg border ${unit.hasHeater ? 'bg-gray-50 border-gray-200' : 'bg-gray-50/50 border-gray-100 opacity-50'}`}>
-                    <Wind className="w-5 h-5 mb-2 text-orange-500" />
-                    <span className="text-sm font-medium">Heater</span>
-                    <span className="block text-xs text-gray-500">{unit.hasHeater ? 'Available' : 'Not Included'}</span>
-                  </div>
+                <div className={`p-8 rounded-[2.5rem] border-2 transition-all ${unit.hasRef ? 'bg-white border-emerald-50 shadow-xl shadow-emerald-900/5' : 'bg-gray-50 border-gray-100 opacity-40'}`}>
+                  <Snowflake className="w-8 h-8 mb-4 text-emerald-950" />
+                  <p className="font-black text-xl text-emerald-950 uppercase tracking-tighter">Kitchenette</p>
+                  <p className="text-gray-500 font-bold">{unit.hasRef ? 'Refrigerator Included' : 'No Ref included'}</p>
                 </div>
               </div>
 
-              <div className="bg-yellow-50 p-6 rounded-xl border border-yellow-100 space-y-3">
-                 <h3 className="font-bold text-yellow-900">Important Reminders</h3>
-                 <ul className="text-sm text-yellow-800 space-y-2 list-disc list-inside">
-                   <li>Check-in: 2:00 PM | Check-out: 12:00 PM</li>
-                   <li>Quiet hours start at 10:00 PM</li>
-                   <li>Clean as you go policy</li>
-                   <li>Toiletries (towel, soap, shampoo) are NOT provided.</li>
-                 </ul>
+              <div className="bg-amber-50 p-10 rounded-[3rem] border-2 border-amber-100/50 space-y-6">
+                <h3 className="text-2xl font-black text-amber-950 tracking-tighter flex items-center gap-3">
+                  <AlertCircle className="w-6 h-6" />
+                  Essential Guest Guide
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <p className="text-amber-900/60 font-black text-[10px] uppercase tracking-widest">Timings</p>
+                    <p className="text-amber-950 font-bold text-lg">Check-in: 2PM • Check-out: 12PM</p>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-amber-900/60 font-black text-[10px] uppercase tracking-widest">Quiet Hours</p>
+                    <p className="text-amber-950 font-bold text-lg">Starts at 10PM nightly</p>
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-amber-200/50">
+                  <p className="text-sm font-medium text-amber-900/60 flex items-start gap-3">
+                    <span className="shrink-0 block w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5" />
+                    Guest Note: Personal toiletries (towels, soap) are not provided. Please plan accordingly for your stay.
+                  </p>
+                </div>
               </div>
 
-              <Separator />
+              <Separator className="bg-emerald-50" />
 
               <ReviewSection unitId={unit.id} reviews={unit.reviews} />
+            </div>
 
+            <div className="w-full lg:sticky lg:top-32">
+              <BookingForm
+                pricing={{
+                  id: unit.id,
+                  basePrice: unit.basePrice,
+                  basePax: unit.basePax,
+                  extraPaxPrice: unit.extraPaxPrice,
+                  maxPax: unit.maxPax,
+                  hasCarConfig: true
+                }}
+                blockedDates={blockedDates}
+              />
             </div>
 
           </div>
-        </div>
+        </ParallaxHero>
       </main>
 
       <Footer />

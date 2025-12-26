@@ -3,6 +3,7 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { UnitCard } from '@/components/booking/UnitCard'
 import { UnitSearchFilter } from '@/components/booking/UnitSearchFilter'
+import { AnimatedHeader } from '@/components/booking/AnimatedHeader'
 import { CalendarX } from 'lucide-react'
 
 // Force dynamic rendering since we use searchParams
@@ -53,12 +54,12 @@ async function getFilteredUnits(from?: string, to?: string, pax?: string) {
       // Find units that HAVE bookings in this range
       const unavailableUnitIds = await prisma.booking.findMany({
         where: {
-          status: { in: ['CONFIRMED'] }, 
+          status: { in: ['CONFIRMED'] },
           OR: [
-            { 
+            {
               // Check for overlap: (StartA <= EndB) and (EndA >= StartB)
-              checkIn: { lte: endDate }, 
-              checkOut: { gte: startDate } 
+              checkIn: { lte: endDate },
+              checkOut: { gte: startDate }
             }
           ]
         },
@@ -67,7 +68,7 @@ async function getFilteredUnits(from?: string, to?: string, pax?: string) {
 
       // Fix: Explicitly type the parameter to avoid implicit 'any'
       const excludedIds = unavailableUnitIds.map((b: { unitId: string }) => b.unitId)
-      
+
       // Exclude these IDs from result
       where.id = { notIn: excludedIds }
     }
@@ -79,72 +80,67 @@ async function getFilteredUnits(from?: string, to?: string, pax?: string) {
       basePrice: 'asc',
     },
   })
-  
+
   return units as unknown as UnitData[]
 }
 
 export default async function BookPage(props: PageProps) {
   const searchParams = await props.searchParams;
   const { from, to, pax } = searchParams
-  
+
   const allUnits = await getFilteredUnits(from, to, pax)
 
   // Filter Logic for "Spotlight" units
-  const featuredUnits = allUnits.filter(u => 
+  const featuredUnits = allUnits.filter(u =>
     u.slug === 'big-house' || u.slug === 'veranda-unit'
   )
-  
+
   // The rest of the units
-  const standardUnits = allUnits.filter(u => 
+  const standardUnits = allUnits.filter(u =>
     u.slug !== 'big-house' && u.slug !== 'veranda-unit'
   )
 
   const isFiltering = !!(from || to || pax)
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
+    <div className="min-h-screen bg-[#fcfdfc] font-sans text-emerald-950 flex flex-col">
       <Navbar />
 
-      <main className="flex-1 pb-20">
-        {/* Page Header */}
-        <div className="bg-emerald-900 text-white pt-12 pb-16 px-4">
-          <div className="container mx-auto space-y-4 text-center md:text-left">
-            <h1 className="text-3xl md:text-4xl font-bold">Select Your Unit</h1>
-            <p className="text-emerald-100 max-w-xl mx-auto md:mx-0">
-              From cozy couple rooms to full house rentals. Find the perfect space for your Baguio getaway.
-            </p>
-          </div>
-        </div>
+      <main className="flex-1 pb-32">
+        {/* Page Header - Refined & Immersive */}
+        <AnimatedHeader />
 
-        {/* Search Bar */}
+        {/* Floating Search Hub is handled by UnitSearchFilter component fixed position */}
         <UnitSearchFilter />
 
-        <div className="container mx-auto px-4 mt-12 space-y-12">
-          
+        <div className="container mx-auto px-4 -mt-12 relative z-20 space-y-20">
+
           {/* No Results State */}
           {allUnits.length === 0 && (
-            <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
-              <div className="w-16 h-16 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CalendarX className="w-8 h-8" />
+            <div className="text-center py-24 bg-white rounded-[3rem] shadow-2xl shadow-emerald-900/5 border border-emerald-50">
+              <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CalendarX className="w-10 h-10" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900">No units available</h3>
-              <p className="text-gray-500 mt-2 max-w-md mx-auto">
-                We couldn't find any units matching your criteria. Try adjusting your dates or guest count.
+              <h3 className="text-2xl font-black text-emerald-950 tracking-tight">No units available</h3>
+              <p className="text-gray-500 mt-2 max-w-sm mx-auto font-medium">
+                Try adjusting your dates or guests to see what we have ready for you.
               </p>
             </div>
           )}
 
           {/* Spotlight Section */}
           {featuredUnits.length > 0 && (
-            <section className="space-y-6">
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-1 bg-amber-500 rounded-full" />
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {isFiltering ? 'Available Top Choices' : 'Most Popular Choices'}
-                </h2>
+            <section className="space-y-10">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-600 ml-1">Curated Selections</p>
+                  <h2 className="text-4xl font-black text-emerald-950 tracking-tighter">
+                    {isFiltering ? 'Best Available Matches' : 'Guest Favorites'}
+                  </h2>
+                </div>
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 {featuredUnits.map(unit => (
                   <UnitCard key={unit.id} unit={unit} isFeatured={true} />
                 ))}
@@ -154,15 +150,17 @@ export default async function BookPage(props: PageProps) {
 
           {/* Standard Grid */}
           {standardUnits.length > 0 && (
-            <section className="space-y-6">
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-1 bg-emerald-500 rounded-full" />
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {isFiltering ? 'Other Available Rooms' : 'All Available Rooms'}
-                </h2>
+            <section className="space-y-10">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-700/60 ml-1">Full Collection</p>
+                  <h2 className="text-4xl font-black text-emerald-950 tracking-tighter">
+                    {isFiltering ? 'All Matching Options' : 'Browse All Rooms'}
+                  </h2>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                 {standardUnits.map(unit => (
                   <UnitCard key={unit.id} unit={unit} />
                 ))}
