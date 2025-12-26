@@ -9,7 +9,6 @@ import { logActivity } from "@/server/actions/audit"
 
 export async function createAgent(formData: FormData) {
   const session = await auth()
-  // @ts-ignore
   if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
 
   const rawData = {
@@ -51,7 +50,7 @@ export async function createAgent(formData: FormData) {
         mobile: data.mobile,
         password: hashedPassword,
         role: 'AGENT',
-        commissionRate: data.commissionRate / 100, 
+        commissionRate: data.commissionRate / 100,
         agentCode: data.agentCode || `AGT-${Math.floor(Math.random() * 10000)}`
       }
     })
@@ -75,7 +74,6 @@ export async function createAgent(formData: FormData) {
 
 export async function deleteAgent(agentId: string) {
   const session = await auth()
-  // @ts-ignore
   if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
 
   try {
@@ -84,13 +82,13 @@ export async function deleteAgent(agentId: string) {
     })
 
     if (agent?.role !== 'AGENT') {
-        return { error: "Cannot delete non-agent users via this action." }
+      return { error: "Cannot delete non-agent users via this action." }
     }
 
     await prisma.user.delete({
       where: { id: agentId }
     })
-    
+
     // AUDIT LOG
     await logActivity(
       session.user.id!,

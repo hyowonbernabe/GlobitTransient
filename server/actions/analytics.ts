@@ -6,7 +6,6 @@ import { eachMonthOfInterval, endOfYear, format, startOfYear, subMonths } from '
 
 export async function getRevenueData() {
   const session = await auth()
-  // @ts-ignore
   if (session?.user?.role !== 'ADMIN') return []
 
   try {
@@ -31,10 +30,10 @@ export async function getRevenueData() {
 
     // 3. Group by Month
     const months = eachMonthOfInterval({ start: startDate, end: endDate })
-    
+
     const data = months.map(month => {
       const monthKey = format(month, 'MMM') // "Jan", "Feb"
-      
+
       // Sum revenue for this month
       const monthlyRevenue = bookings
         .filter(b => format(b.checkIn, 'MMM') === monthKey)
@@ -55,33 +54,32 @@ export async function getRevenueData() {
 }
 
 export async function getOccupancyData() {
-    const session = await auth()
-    // @ts-ignore
-    if (session?.user?.role !== 'ADMIN') return []
-  
-    try {
-        // Last 6 months
-        const startDate = subMonths(new Date(), 5)
-        const endDate = new Date()
+  const session = await auth()
+  if (session?.user?.role !== 'ADMIN') return []
 
-        const bookings = await prisma.booking.findMany({
-            where: {
-                status: { in: ['CONFIRMED', 'COMPLETED'] },
-                checkIn: { gte: startDate }
-            },
-            select: { checkIn: true }
-        })
+  try {
+    // Last 6 months
+    const startDate = subMonths(new Date(), 5)
+    const endDate = new Date()
 
-        const months = eachMonthOfInterval({ start: startDate, end: endDate })
+    const bookings = await prisma.booking.findMany({
+      where: {
+        status: { in: ['CONFIRMED', 'COMPLETED'] },
+        checkIn: { gte: startDate }
+      },
+      select: { checkIn: true }
+    })
 
-        const data = months.map(month => {
-            const monthStr = format(month, 'MMM')
-            const count = bookings.filter(b => format(b.checkIn, 'MMM') === monthStr).length
-            return { name: monthStr, bookings: count }
-        })
+    const months = eachMonthOfInterval({ start: startDate, end: endDate })
 
-        return data
-    } catch (error) {
-        return []
-    }
+    const data = months.map(month => {
+      const monthStr = format(month, 'MMM')
+      const count = bookings.filter(b => format(b.checkIn, 'MMM') === monthStr).length
+      return { name: monthStr, bookings: count }
+    })
+
+    return data
+  } catch (error) {
+    return []
+  }
 }

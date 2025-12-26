@@ -5,10 +5,10 @@ import { auth } from '@/server/auth'
 
 // Helper function to be used internally by other server actions
 export async function logActivity(
-  userId: string, 
-  action: string, 
-  entityType: string, 
-  entityId?: string, 
+  userId: string,
+  action: string,
+  entityType: string,
+  entityId?: string,
   details?: string
 ) {
   try {
@@ -31,8 +31,7 @@ export async function logActivity(
 // Action for the Admin UI to fetch logs
 export async function getAuditLogs() {
   const session = await auth()
-  
-  // @ts-ignore - Role check
+
   if (session?.user?.role !== 'ADMIN') return []
 
   try {

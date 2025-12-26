@@ -8,7 +8,6 @@ import { logActivity } from "@/server/actions/audit"
 
 export async function markCommissionPaid(commissionId: string) {
   const session = await auth()
-  // @ts-ignore
   if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
 
   try {
@@ -52,7 +51,6 @@ export async function markCommissionPaid(commissionId: string) {
 
 export async function rejectCommission(commissionId: string) {
   const session = await auth()
-  // @ts-ignore
   if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
 
   try {

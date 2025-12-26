@@ -7,13 +7,12 @@ import { logActivity } from "@/server/actions/audit"
 
 export async function deleteReview(reviewId: string) {
   const session = await auth()
-  // @ts-ignore
   if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
 
   try {
     const review = await (prisma as any).review.findUnique({
       where: { id: reviewId },
-      include: { 
+      include: {
         unit: { select: { name: true } },
         user: { select: { name: true } }
       }

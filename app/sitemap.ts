@@ -23,7 +23,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     select: { slug: true }
   })
 
-  const unitRoutes = units.map((unit) => ({
+  const unitRoutes = units.map((unit: { slug: string }) => ({
     url: `${baseUrl}/book/${unit.slug}`,
     lastModified: new Date(), // Fallback as updatedAt is not in schema
     changeFrequency: 'weekly' as const,

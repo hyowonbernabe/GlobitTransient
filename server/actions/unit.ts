@@ -9,7 +9,6 @@ import { logActivity } from "@/server/actions/audit"
 
 export async function updateUnit(unitId: string, formData: FormData) {
   const session = await auth()
-  // @ts-ignore
   if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
 
   // Parse images separately as getAll returns string[]
@@ -26,7 +25,7 @@ export async function updateUnit(unitId: string, formData: FormData) {
     hasRef: formData.get("hasRef") === "on",
     hasHeater: formData.get("hasHeater") === "on",
     hasOwnCR: formData.get("hasOwnCR") === "on",
-    images: images, 
+    images: images,
   }
 
   const result = unitSchema.safeParse(rawData)
@@ -37,7 +36,7 @@ export async function updateUnit(unitId: string, formData: FormData) {
 
   try {
     const data = result.data
-    
+
     await prisma.unit.update({
       where: { id: unitId },
       data: {
@@ -49,7 +48,7 @@ export async function updateUnit(unitId: string, formData: FormData) {
         hasRef: data.hasRef,
         hasHeater: data.hasHeater,
         hasOwnCR: data.hasOwnCR,
-        basePrice: data.basePrice * 100, 
+        basePrice: data.basePrice * 100,
         extraPaxPrice: data.extraPaxPrice * 100,
         // Only update images if provided, otherwise keep existing? 
         // No, in this UI we send the full list every time, so we overwrite.
@@ -79,7 +78,6 @@ export async function updateUnit(unitId: string, formData: FormData) {
 
 export async function createUnit(formData: FormData) {
   const session = await auth()
-  // @ts-ignore
   if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
 
   const images = formData.getAll("images").map(i => i.toString()).filter(i => i.length > 0)
@@ -121,7 +119,7 @@ export async function createUnit(formData: FormData) {
         hasOwnCR: data.hasOwnCR,
         basePrice: data.basePrice * 100,
         extraPaxPrice: data.extraPaxPrice * 100,
-        images: data.images && data.images.length > 0 ? data.images : ['/assets/images/placeholder.png'] 
+        images: data.images && data.images.length > 0 ? data.images : ['/assets/images/placeholder.png']
       }
     })
 
@@ -145,19 +143,18 @@ export async function createUnit(formData: FormData) {
 
 export async function deleteUnit(unitId: string) {
   const session = await auth()
-  // @ts-ignore
   if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
 
   try {
     const activeBookings = await prisma.booking.findFirst({
-        where: { 
-            unitId,
-            status: { in: ['CONFIRMED', 'PENDING'] }
-        }
+      where: {
+        unitId,
+        status: { in: ['CONFIRMED', 'PENDING'] }
+      }
     })
 
     if (activeBookings) {
-        return { error: "Cannot delete unit with active bookings." }
+      return { error: "Cannot delete unit with active bookings." }
     }
 
     const unit = await prisma.unit.delete({

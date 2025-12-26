@@ -8,7 +8,6 @@ import { logActivity } from "@/server/actions/audit"
 
 export async function approveBooking(bookingId: string) {
   const session = await auth()
-  // @ts-ignore
   if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
 
   try {
@@ -31,17 +30,17 @@ export async function approveBooking(bookingId: string) {
         status: 'CONFIRMED', // Is there already a CONFIRMED booking?
         id: { not: bookingId }, // Exclude self
         OR: [
-          { 
-            checkIn: { lte: booking.checkOut }, 
-            checkOut: { gte: booking.checkIn } 
+          {
+            checkIn: { lte: booking.checkOut },
+            checkOut: { gte: booking.checkIn }
           }
         ]
       }
     })
 
     if (conflict) {
-      return { 
-        error: "Cannot approve: Another booking has already been confirmed for these dates." 
+      return {
+        error: "Cannot approve: Another booking has already been confirmed for these dates."
       }
     }
 
@@ -67,7 +66,7 @@ export async function approveBooking(bookingId: string) {
       where: { id: bookingId },
       data: {
         status: 'CONFIRMED',
-        paymentStatus: 'PARTIAL', 
+        paymentStatus: 'PARTIAL',
       }
     })
 
@@ -104,7 +103,6 @@ export async function approveBooking(bookingId: string) {
 
 export async function cancelBooking(bookingId: string) {
   const session = await auth()
-  // @ts-ignore
   if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
 
   try {
@@ -123,13 +121,13 @@ export async function cancelBooking(bookingId: string) {
     })
 
     if (booking.user.email) {
-        await sendBookingCancellation(
-            booking.user.email,
-            booking.user.name || 'Guest',
-            booking.unit.name,
-            booking.id,
-            "Cancelled by Admin"
-        )
+      await sendBookingCancellation(
+        booking.user.email,
+        booking.user.name || 'Guest',
+        booking.unit.name,
+        booking.id,
+        "Cancelled by Admin"
+      )
     }
 
     await logActivity(
@@ -152,7 +150,6 @@ export async function cancelBooking(bookingId: string) {
 
 export async function createManualBooking(formData: FormData) {
   const session = await auth()
-  // @ts-ignore
   if (session?.user?.role !== 'ADMIN' && session?.user?.role !== 'AGENT') {
     return { error: "Unauthorized" }
   }
@@ -163,7 +160,7 @@ export async function createManualBooking(formData: FormData) {
   const guestName = formData.get('guestName') as string
   const notes = formData.get('notes') as string
   const amountStr = formData.get('amount') as string
-  
+
   const amount = amountStr ? Math.round(parseFloat(amountStr) * 100) : 0
 
   try {
@@ -184,36 +181,36 @@ export async function createManualBooking(formData: FormData) {
     }
 
     let user = await prisma.user.findFirst({
-        where: { email: 'walkin@globit.com' }
+      where: { email: 'walkin@globit.com' }
     })
 
     if (!user) {
-        user = await prisma.user.create({
-            data: {
-                name: 'Walk-In Guest',
-                email: 'walkin@globit.com',
-                role: 'CLIENT',
-                mobile: '0000000000'
-            }
-        })
+      user = await prisma.user.create({
+        data: {
+          name: 'Walk-In Guest',
+          email: 'walkin@globit.com',
+          role: 'CLIENT',
+          mobile: '0000000000'
+        }
+      })
     }
 
     const booking = await prisma.booking.create({
-        data: {
-            unitId,
-            userId: user.id,
-            checkIn,
-            checkOut,
-            adults: 1, 
-            kids: 0,
-            toddlers: 0,
-            totalPrice: amount,
-            downpayment: 0, 
-            balance: amount, 
-            status: 'CONFIRMED', 
-            paymentStatus: amount > 0 ? 'FULL' : 'UNPAID',
-            notes: `Manual Booking: ${guestName}\n${notes}`
-        }
+      data: {
+        unitId,
+        userId: user.id,
+        checkIn,
+        checkOut,
+        adults: 1,
+        kids: 0,
+        toddlers: 0,
+        totalPrice: amount,
+        downpayment: 0,
+        balance: amount,
+        status: 'CONFIRMED',
+        paymentStatus: amount > 0 ? 'FULL' : 'UNPAID',
+        notes: `Manual Booking: ${guestName}\n${notes}`
+      }
     })
 
     await logActivity(
@@ -236,7 +233,6 @@ export async function createManualBooking(formData: FormData) {
 
 export async function blockUnitDates(formData: FormData) {
   const session = await auth()
-  // @ts-ignore
   if (session?.user?.role !== 'ADMIN' && session?.user?.role !== 'AGENT') {
     return { error: "Unauthorized" }
   }
@@ -263,36 +259,36 @@ export async function blockUnitDates(formData: FormData) {
     }
 
     let user = await prisma.user.findFirst({
-        where: { email: 'maintenance@globit.com' }
+      where: { email: 'maintenance@globit.com' }
     })
 
     if (!user) {
-        user = await prisma.user.create({
-            data: {
-                name: 'System Maintenance',
-                email: 'maintenance@globit.com',
-                role: 'ADMIN',
-                mobile: '0000000000'
-            }
-        })
+      user = await prisma.user.create({
+        data: {
+          name: 'System Maintenance',
+          email: 'maintenance@globit.com',
+          role: 'ADMIN',
+          mobile: '0000000000'
+        }
+      })
     }
 
     const booking = await prisma.booking.create({
-        data: {
-            unitId,
-            userId: user.id,
-            checkIn,
-            checkOut,
-            adults: 0,
-            kids: 0,
-            toddlers: 0,
-            totalPrice: 0,
-            downpayment: 0,
-            balance: 0,
-            status: 'CONFIRMED',
-            paymentStatus: 'FULL',
-            notes: `Blocked: ${reason}\n${notes}`
-        }
+      data: {
+        unitId,
+        userId: user.id,
+        checkIn,
+        checkOut,
+        adults: 0,
+        kids: 0,
+        toddlers: 0,
+        totalPrice: 0,
+        downpayment: 0,
+        balance: 0,
+        status: 'CONFIRMED',
+        paymentStatus: 'FULL',
+        notes: `Blocked: ${reason}\n${notes}`
+      }
     })
 
     await logActivity(

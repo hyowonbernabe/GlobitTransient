@@ -7,7 +7,6 @@ import { logActivity } from "@/server/actions/audit"
 
 export async function createSnippet(formData: FormData) {
   const session = await auth()
-  // @ts-ignore
   if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
 
   const category = formData.get('category') as string
@@ -46,7 +45,6 @@ export async function createSnippet(formData: FormData) {
 
 export async function deleteSnippet(id: string) {
   const session = await auth()
-  // @ts-ignore
   if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
 
   try {
