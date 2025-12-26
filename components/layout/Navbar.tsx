@@ -11,7 +11,6 @@ export function Navbar() {
   const pathname = usePathname()
 
   // STRICTLY HIDE on Admin and Portal routes
-  // This prevents the public navbar from showing up in the backend interfaces
   if (pathname?.startsWith('/admin') || pathname?.startsWith('/portal')) {
     return null
   }
@@ -21,6 +20,7 @@ export function Navbar() {
   const navLinks = [
     { href: '/', label: 'Home' },
     { href: '/book', label: 'Book Now' },
+    { href: '/track', label: 'My Booking' },
     { href: '/#location', label: 'Location' },
     { href: '/faq', label: 'FAQ' },
   ]
