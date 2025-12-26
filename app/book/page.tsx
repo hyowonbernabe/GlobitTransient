@@ -3,7 +3,7 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { UnitCard } from '@/components/booking/UnitCard'
 import { UnitSearchFilter } from '@/components/booking/UnitSearchFilter'
-import { Users, Search, CalendarX } from 'lucide-react'
+import { CalendarX } from 'lucide-react'
 
 // Force dynamic rendering since we use searchParams
 export const dynamic = 'force-dynamic'
@@ -35,9 +35,10 @@ async function getFilteredUnits(from?: string, to?: string, pax?: string) {
 
     if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
       // Find units that HAVE bookings in this range
+      // UPDATED: Only exclude units with CONFIRMED bookings. Pending ones are fair game.
       const unavailableUnitIds = await prisma.booking.findMany({
         where: {
-          status: { in: ['CONFIRMED', 'PENDING'] }, // Pending also blocks to prevent double booking
+          status: { in: ['CONFIRMED'] }, 
           OR: [
             { 
               // Check for overlap: (StartA <= EndB) and (EndA >= StartB)

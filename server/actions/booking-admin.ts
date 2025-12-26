@@ -3,7 +3,7 @@
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/server/auth"
-import { sendBookingConfirmation } from "@/server/actions/email"
+import { sendBookingConfirmation, sendBookingCancellation } from "@/server/actions/email"
 import { logActivity } from "@/server/actions/audit"
 
 export async function approveBooking(bookingId: string) {
@@ -22,6 +22,47 @@ export async function approveBooking(bookingId: string) {
 
     if (!booking) return { error: "Booking not found" }
 
+    // === CRITICAL CHECK: AVAILABILITY ===
+    // Since we allow multiple PENDING bookings, we must check for conflicts
+    // at the moment of APPROVAL.
+    const conflict = await prisma.booking.findFirst({
+      where: {
+        unitId: booking.unitId,
+        status: 'CONFIRMED', // Is there already a CONFIRMED booking?
+        id: { not: bookingId }, // Exclude self
+        OR: [
+          { 
+            checkIn: { lte: booking.checkOut }, 
+            checkOut: { gte: booking.checkIn } 
+          }
+        ]
+      }
+    })
+
+    if (conflict) {
+      return { 
+        error: "Cannot approve: Another booking has already been confirmed for these dates." 
+      }
+    }
+
+    // === PARKING CHECK ===
+    if (booking.hasCar) {
+      const carConflict = await prisma.booking.findFirst({
+        where: {
+          hasCar: true,
+          status: 'CONFIRMED',
+          id: { not: bookingId },
+          OR: [
+            { checkIn: { lte: booking.checkOut }, checkOut: { gte: booking.checkIn } }
+          ]
+        }
+      })
+
+      if (carConflict) {
+        return { error: "Cannot approve: Parking slot is already taken by another confirmed guest." }
+      }
+    }
+
     await prisma.booking.update({
       where: { id: bookingId },
       data: {
@@ -30,7 +71,6 @@ export async function approveBooking(bookingId: string) {
       }
     })
 
-    // Send Email Notification
     if (booking.user.email) {
       await sendBookingConfirmation({
         bookingId: booking.id,
@@ -44,7 +84,6 @@ export async function approveBooking(bookingId: string) {
       })
     }
 
-    // AUDIT LOG
     await logActivity(
       session.user.id!,
       "APPROVE_BOOKING",
@@ -69,6 +108,13 @@ export async function cancelBooking(bookingId: string) {
   if (session?.user?.role !== 'ADMIN') return { error: "Unauthorized" }
 
   try {
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { user: true, unit: true }
+    })
+
+    if (!booking) return { error: "Booking not found" }
+
     await prisma.booking.update({
       where: { id: bookingId },
       data: {
@@ -76,7 +122,16 @@ export async function cancelBooking(bookingId: string) {
       }
     })
 
-    // AUDIT LOG
+    if (booking.user.email) {
+        await sendBookingCancellation(
+            booking.user.email,
+            booking.user.name || 'Guest',
+            booking.unit.name,
+            booking.id,
+            "Cancelled by Admin"
+        )
+    }
+
     await logActivity(
       session.user.id!,
       "CANCEL_BOOKING",
@@ -112,10 +167,12 @@ export async function createManualBooking(formData: FormData) {
   const amount = amountStr ? Math.round(parseFloat(amountStr) * 100) : 0
 
   try {
+    // For manual bookings, we generally assume they are confirmed immediately (Walk-in),
+    // so we MUST check against CONFIRMED bookings.
     const conflictingBooking = await prisma.booking.findFirst({
       where: {
         unitId,
-        status: { in: ['CONFIRMED', 'PENDING'] },
+        status: { in: ['CONFIRMED'] },
         OR: [
           { checkIn: { lte: checkOut }, checkOut: { gte: checkIn } }
         ]
@@ -159,7 +216,6 @@ export async function createManualBooking(formData: FormData) {
         }
     })
 
-    // AUDIT LOG
     await logActivity(
       session.user.id!,
       "MANUAL_BOOKING",
@@ -195,7 +251,7 @@ export async function blockUnitDates(formData: FormData) {
     const conflictingBooking = await prisma.booking.findFirst({
       where: {
         unitId,
-        status: { in: ['CONFIRMED', 'PENDING'] },
+        status: { in: ['CONFIRMED'] },
         OR: [
           { checkIn: { lte: checkOut }, checkOut: { gte: checkIn } }
         ]
@@ -239,7 +295,6 @@ export async function blockUnitDates(formData: FormData) {
         }
     })
 
-    // AUDIT LOG
     await logActivity(
       session.user.id!,
       "BLOCK_DATES",

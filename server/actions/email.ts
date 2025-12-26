@@ -2,9 +2,9 @@
 
 import { Resend } from 'resend'
 import { BookingConfirmationTemplate } from '@/components/emails/BookingConfirmationTemplate'
+import { BookingCancellationTemplate } from '@/components/emails/BookingCancellationTemplate'
 import { format } from 'date-fns'
 
-// Initialize Resend with API Key from env
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 interface BookingDetails {
@@ -29,7 +29,7 @@ export async function sendBookingConfirmation(details: BookingDetails) {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: 'Globit Transient <reservations@globit.com>', // You need to verify a domain in Resend dashboard
+      from: 'Globit Transient <reservations@globit.com>',
       to: [details.guestEmail],
       subject: 'Booking Confirmed - Globit Transient Baguio',
       react: BookingConfirmationTemplate({
@@ -39,7 +39,7 @@ export async function sendBookingConfirmation(details: BookingDetails) {
         checkOut: format(details.checkOut, "MMM dd, yyyy"),
         totalPrice: formatMoney(details.totalPrice),
         balance: formatMoney(details.balance),
-        bookingId: details.bookingId.slice(-6).toUpperCase() // Show short ID
+        bookingId: details.bookingId.slice(-6).toUpperCase()
       }) as React.ReactElement,
     })
 
@@ -52,5 +52,31 @@ export async function sendBookingConfirmation(details: BookingDetails) {
   } catch (err) {
     console.error("Email Server Action Error:", err)
     return { success: false, error: "Internal Server Error" }
+  }
+}
+
+export async function sendBookingCancellation(
+  email: string, 
+  name: string, 
+  unitName: string, 
+  bookingId: string,
+  reason?: string
+) {
+  if (!process.env.RESEND_API_KEY) return
+
+  try {
+    await resend.emails.send({
+      from: 'Globit Transient <reservations@globit.com>',
+      to: [email],
+      subject: 'Booking Cancelled - Globit Transient',
+      react: BookingCancellationTemplate({
+        guestName: name,
+        unitName: unitName,
+        bookingId: bookingId.slice(-6).toUpperCase(),
+        reason
+      }) as React.ReactElement,
+    })
+  } catch (error) {
+    console.error("Failed to send cancellation email:", error)
   }
 }

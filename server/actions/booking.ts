@@ -15,10 +15,11 @@ export async function createBooking(data: z.infer<typeof createBookingSchema>) {
   const { unitId, checkIn, checkOut, guestName, guestMobile, guestEmail, ...rest } = result.data
 
   try {
+    // UPDATED: Only check against CONFIRMED bookings. Pending is allowed.
     const conflictingBooking = await prisma.booking.findFirst({
       where: {
         unitId,
-        status: { in: ['CONFIRMED', 'PENDING'] },
+        status: { in: ['CONFIRMED'] }, 
         OR: [
           { 
             checkIn: { lte: checkOut }, 
@@ -29,14 +30,15 @@ export async function createBooking(data: z.infer<typeof createBookingSchema>) {
     })
 
     if (conflictingBooking) {
-      return { error: "Sorry, these dates are no longer available." }
+      return { error: "Sorry, these dates are already taken." }
     }
 
+    // Car Check: Same logic, only confirmed cars block.
     if (rest.hasCar) {
       const carBooking = await prisma.booking.findFirst({
         where: {
           hasCar: true,
-          status: { in: ['CONFIRMED', 'PENDING'] },
+          status: { in: ['CONFIRMED'] },
           OR: [
             { checkIn: { lte: checkOut }, checkOut: { gte: checkIn } }
           ]
@@ -44,7 +46,7 @@ export async function createBooking(data: z.infer<typeof createBookingSchema>) {
       })
 
       if (carBooking) {
-        return { error: "Parking slot is already reserved for these dates." }
+        return { error: "The parking slot is already confirmed for these dates." }
       }
     }
 
@@ -102,10 +104,9 @@ export async function createBooking(data: z.infer<typeof createBookingSchema>) {
       }
     })
 
-    // TRIGGER NOTIFICATION
     await notifyAdmins(
-      "New Reservation",
-      `${guestName} reserved ${unit.name}. Waiting for payment.`,
+      "New Reservation Request",
+      `${guestName} requested ${unit.name}. Payment pending.`,
       "/admin/bookings",
       "INFO"
     )
