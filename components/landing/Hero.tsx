@@ -1,117 +1,153 @@
-'use client'
+"use client"
 
-import { useEffect, useRef } from 'react'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { MapPin, ArrowRight } from 'lucide-react'
-import { useI18n } from '@/lib/i18n-context'
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { motion } from 'framer-motion'
+import { useRef } from "react"
+import Image from "next/image"
+import Link from "next/link"
+import { useGSAP } from "@gsap/react"
+import gsap from "gsap"
+import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { ChevronDown } from "lucide-react"
 
-gsap.registerPlugin(ScrollTrigger)
+// Register ScrollTrigger
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger)
+}
 
 export function Hero() {
-  const { t } = useI18n()
-  const sectionRef = useRef<HTMLDivElement>(null)
-  const textRef = useRef<HTMLDivElement>(null)
-  const imageRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const bgImageRef = useRef<HTMLImageElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Mist Dissolve Effect for Text
-      gsap.to(textRef.current, {
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "bottom top",
-          scrub: true,
-        },
-        opacity: 0,
-        y: -100,
-        filter: "blur(20px)",
-        scale: 1.1,
-      })
+  useGSAP(() => {
+    // 1. Initial Load: Text Reveal Sequence
+    const tl = gsap.timeline({ defaults: { ease: "power3.out" } })
 
-      // Subtle Background Zoom/Shift
-      gsap.to(imageRef.current, {
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "bottom top",
-          scrub: true,
-        },
-        scale: 1.15,
-        y: 30,
-      })
-    }, sectionRef)
+    // Split text effect simulation (staggered lines)
+    tl.from(".hero-line", {
+      y: 100,
+      opacity: 0,
+      duration: 1.2,
+      stagger: 0.15,
+      delay: 0.2,
+      clearProps: "all" // Ensure props are cleared after animation
+    })
+    .from(".hero-desc", {
+      y: 20,
+      opacity: 0,
+      duration: 0.8,
+      clearProps: "all"
+    }, "-=0.6")
+    // Fix for buttons: using fromTo to explicitly set end state or ensure 'from' resolves correctly
+    .fromTo(".hero-cta", 
+      { y: 20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.6, stagger: 0.1, clearProps: "transform,opacity" }
+    , "-=0.4")
+    .from(".scroll-indicator", {
+      opacity: 0,
+      y: -10,
+      duration: 0.8,
+      clearProps: "all"
+    }, "-=0.2")
 
-    return () => ctx.revert()
-  }, [])
+    // 2. Scroll Effect: Background Parallax & Zoom
+    // Subtle zoom in and parallax movement on scroll
+    gsap.to(bgImageRef.current, {
+      scale: 1.15, 
+      yPercent: 10,
+      ease: "none",
+      scrollTrigger: {
+        trigger: containerRef.current,
+        start: "top top",
+        end: "bottom top",
+        scrub: true
+      }
+    })
+
+    // 3. Content Fade Out on Scroll
+    gsap.to(contentRef.current, {
+      yPercent: -20,
+      opacity: 0,
+      ease: "none",
+      scrollTrigger: {
+        trigger: containerRef.current,
+        start: "top top",
+        end: "50% top", // Fade out halfway through scroll
+        scrub: true
+      }
+    })
+
+  }, { scope: containerRef })
 
   return (
-    <section ref={sectionRef} className="relative h-[100vh] flex items-center justify-center overflow-hidden bg-black">
-      {/* Background Image - Single High Contrast Layer */}
-      <div ref={imageRef} className="absolute inset-0 z-0">
-        <img
-          src="/assets/images/baguio_midground.png"
-          alt="Baguio Cityscape"
-          className="w-full h-full object-cover opacity-80 contrast-125 brightness-75"
+    <section 
+      ref={containerRef} 
+      className="relative h-screen w-full overflow-hidden flex flex-col justify-center items-center text-center bg-gray-900"
+    >
+      {/* Background Image Layer */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          ref={bgImageRef as any}
+          src="/assets/images/baguio_background_fog.png"
+          alt="Baguio City Landscape with Fog"
+          fill
+          priority
+          className="object-cover object-center will-change-transform opacity-90"
+          placeholder="empty" // Or 'blur' if blurDataURL is available
         />
-        {/* Deep Contrast Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-black" />
-        <div className="absolute inset-0 bg-emerald-950/30 mix-blend-multiply" />
+        {/* Cinematic Gradient Overlays for Readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80 z-10" />
+        <div className="absolute inset-0 bg-black/20 z-10 backdrop-blur-[1px]" />
       </div>
 
-      <div ref={textRef} className="relative z-30 container mx-auto px-6 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-          className="space-y-8"
-        >
-          <div className="space-y-6">
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              className="inline-flex items-center gap-2 bg-emerald-500/20 backdrop-blur-xl border border-emerald-500/30 px-5 py-2 rounded-full text-[10px] md:text-sm font-black uppercase tracking-[0.3em] text-emerald-300 shadow-2xl shadow-emerald-950/50"
-            >
-              <MapPin className="w-4 h-4" />
-              <span>{t('hero.location_badge')}</span>
-            </motion.div>
+      {/* Content Layer */}
+      <div 
+        ref={contentRef} 
+        className="relative z-20 container mx-auto px-6 flex flex-col items-center max-w-4xl pt-20"
+      >
+        {/* Main Headline - Broken into lines for stagger effect */}
+        <h1 className="font-sans font-bold text-white tracking-tight mb-6 drop-shadow-lg flex flex-col items-center">
+            <span className="hero-line text-5xl md:text-7xl lg:text-8xl leading-[0.9]">
+              Your Home
+            </span>
+            <span className="hero-line text-5xl md:text-7xl lg:text-8xl text-emerald-400 leading-[0.9]">
+              In The Clouds
+            </span>
+        </h1>
 
-            <h1 className="text-6xl md:text-9xl font-black text-white tracking-tighter leading-[0.85] text-balance drop-shadow-2xl">
-              {t('hero.title_prefix')} <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-200 to-white italic font-serif py-2">
-                {t('hero.title_highlight')}
-              </span>
-            </h1>
+        {/* Subheadline */}
+        <p className="hero-desc text-lg md:text-xl text-gray-200 mb-10 max-w-2xl font-medium leading-relaxed drop-shadow-md">
+          Experience the authentic Baguio breeze, cozy interiors, and breathtaking views at Globit Transient House.
+        </p>
 
-            <p className="text-xl md:text-3xl text-white font-medium max-w-4xl mx-auto leading-relaxed drop-shadow-lg shadow-black/40">
-              {t('hero.description')}
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-6">
-            <Link href="/book" className="w-full sm:w-auto group">
-              <Button size="lg" className="w-full h-16 md:h-20 px-12 text-2xl font-black bg-emerald-950 hover:bg-emerald-900 text-white rounded-[2rem] border-b-4 border-emerald-800 transition-all hover:-translate-y-1 active:translate-y-0.5 active:border-b-0 shadow-2xl shadow-emerald-900/40">
-                {t('hero.cta_book')}
-                <ArrowRight className="ml-2 w-8 h-8 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
-            <Link href="#location" className="w-full sm:w-auto">
-              <Button variant="secondary" size="lg" className="w-full h-16 md:h-20 px-12 text-2xl font-black bg-white border-2 border-emerald-950/10 text-emerald-950 hover:bg-emerald-50 rounded-[2rem] transition-all hover:-translate-y-1 active:translate-y-0.5 shadow-xl shadow-emerald-900/5">
-                {t('hero.cta_location')}
-              </Button>
-            </Link>
-          </div>
-        </motion.div>
+        {/* CTA Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto justify-center">
+          <Link 
+            href="/book" 
+            className="hero-cta group relative inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white transition-all duration-200 bg-emerald-600 rounded-full hover:bg-emerald-500 hover:scale-105 shadow-lg shadow-emerald-900/20 overflow-hidden"
+          >
+            <span className="relative z-10">Book Your Stay</span>
+            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
+          </Link>
+          
+          <button 
+            onClick={() => {
+                // Smooth scroll to featured units section
+                const featured = document.getElementById('featured-units');
+                featured?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="hero-cta inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white transition-all duration-200 bg-white/10 backdrop-blur-md border border-white/20 rounded-full hover:bg-white/20 hover:scale-105"
+          >
+            Explore Gallery
+          </button>
+        </div>
       </div>
 
-      {/* Modern Vignette */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.8)_100%)] pointer-events-none z-10" />
-      <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#0a1a15] to-transparent z-20" />
+      {/* Scroll Indicator */}
+      <div className="scroll-indicator absolute bottom-8 md:bottom-12 z-20 flex flex-col items-center gap-2 text-white/60 animate-bounce-slow">
+         <span className="text-[10px] uppercase tracking-widest font-bold">Scroll to Explore</span>
+         <ChevronDown size={24} />
+      </div>
+
     </section>
   )
 }
