@@ -34,6 +34,14 @@ interface Place {
 
 const PLACES: Place[] = [
   {
+    id: 'globittransient',
+    name: 'Globit Transient',
+    type: 'Transient',
+    category: 'Park',
+    walkTime: 1,
+    description: 'The transient place for your stay.',
+  },
+  {
     id: 'lorimar',
     name: 'Lorimar Minimart',
     type: 'Minimart',
@@ -43,7 +51,7 @@ const PLACES: Place[] = [
   },
   {
     id: '7eleven',
-    name: '7-Eleven',
+    name: '7-Eleven Marcos Highway',
     type: 'Convenience Store',
     category: 'Convenience',
     walkTime: 5,
@@ -51,7 +59,7 @@ const PLACES: Place[] = [
   },
   {
     id: 'pethabitat',
-    name: 'Pet Habitat',
+    name: 'Baguio Pet Habitat - Marcos Highway',
     type: 'Pet Store',
     category: 'Pet',
     walkTime: 4,
@@ -67,7 +75,7 @@ const PLACES: Place[] = [
   },
   {
     id: 'bcpo',
-    name: 'BCPO',
+    name: 'BCPO Police Station 10',
     type: 'Police Station',
     category: 'Police',
     walkTime: 6,
@@ -75,7 +83,7 @@ const PLACES: Place[] = [
   },
   {
     id: 'puregold',
-    name: 'Puregold',
+    name: 'Puregold Jr. Bakakeng',
     type: 'Supermarket',
     category: 'Supermarket',
     walkTime: 11,
@@ -99,7 +107,7 @@ const PLACES: Place[] = [
   },
   {
     id: 'smbaguio',
-    name: 'SM Baguio City',
+    name: 'SM City Baguio',
     type: 'Supermall',
     category: 'Mall',
     driveTime: 12,
