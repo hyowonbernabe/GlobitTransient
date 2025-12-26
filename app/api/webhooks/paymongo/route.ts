@@ -9,73 +9,61 @@ export const dynamic = 'force-dynamic'
 export async function POST(req: Request) {
   try {
     const bodyText = await req.text()
-
-    // Log minimal info
-    console.log("🔹 [Webhook] Received PayMongo Event")
-    console.log("📦 Payload Body:", bodyText)
-
-    const headerPayload = await headers();
+    const headerPayload = await headers()
     const signature = headerPayload.get('paymongo-signature')
-
-    // 1. Signature Verification
     const webhookSecret = process.env.PAYMONGO_WEBHOOK_SECRET
-    if (webhookSecret && signature) {
-      const parts = signature.split(',')
 
-      const timestamp = parts.find(part => part.trim().startsWith('t='))?.split('=')[1]
-      const teSignature = parts.find(part => part.trim().startsWith('te='))?.split('=')[1]
-      const liSignature = parts.find(part => part.trim().startsWith('li='))?.split('=')[1]
+    console.log("🔹 [Webhook] Incoming PayMongo Notification")
 
-      console.log(`🔐 Signature Components - t: ${timestamp}, te: ${teSignature?.slice(0, 8)}..., li: ${liSignature?.slice(0, 8)}...`)
-
-      if (!timestamp) {
-        return NextResponse.json({ error: "Invalid Signature" }, { status: 401 })
+    // 1. Mandatory Signature Verification (if secret is configured)
+    if (webhookSecret) {
+      if (!signature) {
+        console.error("❌ [Webhook] Missing Signature Header")
+        return NextResponse.json({ error: "Missing signature" }, { status: 401 })
       }
 
-      const expectedSignature = crypto
-        .createHmac('sha256', webhookSecret)
-        .update(`${timestamp}.${bodyText}`)
-        .digest('hex')
+      const parts = signature.split(',')
+      const timestamp = parts.find(p => p.trim().startsWith('t='))?.split('=')[1]
+      const teSig = parts.find(p => p.trim().startsWith('te='))?.split('=')[1]
+      const liSig = parts.find(p => p.trim().startsWith('li='))?.split('=')[1]
 
-      const isTestMatch = teSignature && expectedSignature === teSignature
-      const isLiveMatch = liSignature && expectedSignature === liSignature
+      if (!timestamp) return NextResponse.json({ error: "Invalid signature format" }, { status: 401 })
 
-      if (!isTestMatch && !isLiveMatch) {
+      const expected = crypto.createHmac('sha256', webhookSecret).update(`${timestamp}.${bodyText}`).digest('hex')
+      const verified = (teSig && expected === teSig) || (liSig && expected === liSig)
+
+      if (!verified) {
         console.error("❌ [Webhook] Signature Mismatch")
-        return NextResponse.json({ error: "Invalid Signature" }, { status: 401 })
+        return NextResponse.json({ error: "Signature mismatch" }, { status: 401 })
       }
     }
 
     const body = JSON.parse(bodyText)
-    const eventType = body.data.attributes.type
+    const eventType = body.data?.attributes?.type
 
-    // 2. Handle 'checkout_session.payment.paid'
-    console.log(`📡 Event Type: ${eventType}`)
+    console.log(`📡 [Webhook] Event: ${eventType}`)
+
+    // 2. Process 'checkout_session.payment.paid'
     if (eventType === 'checkout_session.payment.paid') {
-      const checkoutSession = body.data.attributes.data
-      console.log("🔍 Checkout Session Sub-Resource:", JSON.stringify(checkoutSession, null, 2))
-
-      const attributes = checkoutSession.attributes || {}
-      const metadata = attributes.metadata
-      const bookingId = metadata?.booking_id
-
-      console.log(`📌 Extracted Metadata:`, JSON.stringify(metadata, null, 2))
-      console.log(`🆔 Extracted Booking ID: ${bookingId}`)
+      const sessionData = body.data.attributes.data // This is the checkout_session object
+      const bookingId = sessionData.attributes?.metadata?.booking_id
 
       if (bookingId) {
-        console.log(`✅ [Webhook] Confirming Booking ${bookingId}`)
-
+        console.log(`✅ [Webhook] Payment SUCCESS for Booking: ${bookingId}`)
+        // confirmBooking handles state checks internally (won't double confirm)
         await confirmBooking(
           bookingId,
           `[Webhook] Payment confirmed via PayMongo Event ${body.data.id}`
         )
+      } else {
+        console.warn("⚠️ [Webhook] No booking_id found in metadata.")
       }
     }
 
-    return NextResponse.json({ status: 'success' })
+    return NextResponse.json({ received: true })
 
-  } catch (error) {
-    console.error("❌ [Webhook] Error:", error)
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
+  } catch (err: any) {
+    console.error("❌ [Webhook] Runtime Error:", err.message)
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 })
   }
 }

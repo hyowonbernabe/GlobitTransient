@@ -39,22 +39,23 @@ export async function initiateCheckout(bookingId: string) {
       return { error: "Slot taken by another user." }
     }
 
-    // Use AUTH_URL but fallback to Vercel's automatic URL if available
-    const baseUrl = process.env.AUTH_URL && !process.env.AUTH_URL.includes('localhost')
-      ? process.env.AUTH_URL
+    // Base URL determination for Vercel and local
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL
+      ? process.env.NEXT_PUBLIC_APP_URL
       : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
 
-    const validImages = booking.unit.images.filter(img => img.startsWith('http') || img.startsWith('https'))
+    const validImages = booking.unit.images.filter(img => img.startsWith('http'))
 
     const payload = {
       data: {
         attributes: {
+          show_line_items: true,
           line_items: [
             {
               currency: 'PHP',
               amount: booking.downpayment,
-              description: `Downpayment for ${booking.unit.name}`,
-              name: 'Booking Downpayment',
+              description: `50% Downpayment for ${booking.unit.name}`,
+              name: 'Reservation Downpayment',
               quantity: 1,
               ...(validImages.length > 0 && { images: [validImages[0]] })
             }
@@ -62,11 +63,11 @@ export async function initiateCheckout(bookingId: string) {
           payment_method_types: ['gcash', 'card', 'paymaya', 'grab_pay'],
           success_url: `${baseUrl}/payment/${bookingId}?success=true`,
           cancel_url: `${baseUrl}/payment/${bookingId}?cancelled=true`,
-          description: `Booking ID: ${booking.id}`,
+          description: `Booking ID: ${booking.id} - ${booking.unit.name}`,
           billing: {
-            name: booking.user.name,
-            email: booking.user.email,
-            phone: booking.user.mobile
+            name: booking.user.name || 'Guest',
+            email: booking.user.email || 'guest@example.com',
+            phone: booking.user.mobile || ''
           },
           metadata: {
             booking_id: booking.id
@@ -89,10 +90,11 @@ export async function initiateCheckout(bookingId: string) {
     const data = await response.json()
 
     if (data.errors) {
-      console.error("PayMongo Error:", JSON.stringify(data.errors, null, 2))
-      return { error: "Payment gateway error. Please contact support." }
+      console.error("❌ PayMongo Session Error:", JSON.stringify(data.errors, null, 2))
+      return { error: data.errors[0]?.detail || "Payment gateway error." }
     }
 
+    // Update booking with session ID for later verification
     await prisma.booking.update({
       where: { id: booking.id },
       data: { checkoutSessionId: data.data.id }
@@ -101,8 +103,8 @@ export async function initiateCheckout(bookingId: string) {
     return { success: true, url: data.data.attributes.checkout_url }
 
   } catch (error) {
-    console.error("Gateway Init Error:", error)
-    return { error: "Failed to connect to payment gateway." }
+    console.error("❌ Gateway Init Error:", error)
+    return { error: "Could not connect to payment gateway." }
   }
 }
 
@@ -121,14 +123,24 @@ export async function checkPaymentStatus(bookingId: string) {
       cache: 'no-store'
     })
 
+    if (!response.ok) {
+      return { status: 'pending' }
+    }
+
     const data = await response.json()
-    console.log(`🔍 [Manual Check] Session Info for ${booking.checkoutSessionId}:`, JSON.stringify(data, null, 2))
+    const attributes = data.data?.attributes
 
-    const paymentStatus = data.data?.attributes?.payment_status
-    console.log(`💳 [Manual Check] Payment Status: ${paymentStatus}`)
+    // Robust status check: 
+    // 1. Check if the session is expired/cancelled (though usually we handle success)
+    // 2. Check payment intent status
+    // 3. Check payments array
+    const intentStatus = attributes?.payment_intent?.attributes?.status
+    const payments = attributes?.payments || []
+    const isPaid = intentStatus === 'succeeded' || payments.some((p: any) => p.attributes?.status === 'paid')
 
-    if (paymentStatus === 'paid') {
-      await confirmBooking(bookingId, `[PayMongo] Paid via Session ${booking.checkoutSessionId}`)
+    if (isPaid) {
+      console.log(`✅ [Status Check] Booking ${bookingId} confirmed via API poll.`)
+      await confirmBooking(bookingId, `[System] Payment verified via API Polling`)
       revalidatePath(`/payment/${bookingId}`)
       return { status: 'confirmed' }
     }
@@ -151,19 +163,23 @@ export async function verifyTransaction(sessionId: string, bookingId: string) {
       cache: 'no-store'
     })
 
+    if (!response.ok) return { error: "Could not retrieve payment session." }
+
     const data = await response.json()
-    console.log(`🔍 [Verify] Session Info for ${sessionId}:`, JSON.stringify(data, null, 2))
+    const attributes = data.data?.attributes
 
-    const paymentStatus = data.data?.attributes?.payment_status
-    console.log(`💳 [Verify] Payment Status: ${paymentStatus}`)
+    const intentStatus = attributes?.payment_intent?.attributes?.status
+    const payments = attributes?.payments || []
+    const isPaid = intentStatus === 'succeeded' || payments.some((p: any) => p.attributes?.status === 'paid')
 
-    if (paymentStatus === 'paid') {
-      await confirmBooking(bookingId, `[PayMongo] Paid via Session ${sessionId}`)
+    if (isPaid) {
+      console.log(`✅ [Verify] Booking ${bookingId} confirmed via direct session check.`)
+      await confirmBooking(bookingId, `[System] Payment verified via Direct Verification`)
       revalidatePath(`/payment/${bookingId}`)
       revalidatePath('/track')
       return { success: true }
     } else {
-      return { error: "Payment not completed yet." }
+      return { error: "Your payment hasn't been processed yet. Please wait a few seconds." }
     }
   } catch (error) {
     console.error("Verification Error:", error)

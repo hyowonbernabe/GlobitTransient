@@ -43,7 +43,7 @@ export default async function PaymentPage(props: PageProps) {
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Navbar />
         <main className="flex-1 flex items-center justify-center p-4">
-           <PaymentStatusPoller bookingId={booking.id} />
+          <PaymentStatusPoller bookingId={booking.id} />
         </main>
         <Footer />
       </div>
@@ -52,11 +52,11 @@ export default async function PaymentPage(props: PageProps) {
 
   // 2. Cancelled View
   if (searchParams.cancelled === 'true') {
-     return <CancelledView bookingId={booking.id} />
+    return <CancelledView bookingId={booking.id} />
   }
 
   // 3. Standard Checkout View
-  const formatMoney = (val: number) => 
+  const formatMoney = (val: number) =>
     new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(val / 100)
 
   return (
@@ -95,8 +95,8 @@ export default async function PaymentPage(props: PageProps) {
                       )}
                     </div>
                     <div>
-                        <h3 className="font-bold text-gray-900">{booking.unit.name}</h3>
-                        <p className="text-sm text-gray-500">{format(booking.checkIn, "MMM dd")} - {format(booking.checkOut, "MMM dd")}</p>
+                      <h3 className="font-bold text-gray-900">{booking.unit.name}</h3>
+                      <p className="text-sm text-gray-500">{format(booking.checkIn, "MMM dd")} - {format(booking.checkOut, "MMM dd")}</p>
                     </div>
                   </div>
                   <Separator />
@@ -116,78 +116,85 @@ export default async function PaymentPage(props: PageProps) {
 }
 
 function SuccessView({ booking }: { booking: any }) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        <Navbar />
-        <main className="flex-1 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md text-center p-8 space-y-6 shadow-xl border-emerald-100 animate-in fade-in duration-500">
-            <div className="mx-auto w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-2">
-              <CheckCircle className="w-10 h-10" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Payment Successful!</h1>
-              <p className="text-gray-600 mt-2">Booking Confirmed.</p>
-            </div>
-            
-            <div className="space-y-2">
-                <p className="text-xs text-gray-500 uppercase font-semibold">Your Booking Reference</p>
-                <div className="bg-gray-100 p-3 rounded-lg border border-gray-200 font-mono text-sm font-bold text-gray-800 select-all break-all flex items-center justify-center gap-2">
-                    {booking.id}
-                </div>
-            </div>
-            
-            <div className="bg-emerald-50 p-4 rounded-xl text-left space-y-2 border border-emerald-100">
-               <div className="flex justify-between">
-                   <span className="text-sm text-gray-600">Guest</span>
-                   <span className="text-sm font-medium">{booking.user.name}</span>
-               </div>
-               <div className="flex justify-between">
-                   <span className="text-sm text-gray-600">Unit</span>
-                   <span className="text-sm font-medium">{booking.unit.name}</span>
-               </div>
-               <div className="flex justify-between">
-                   <span className="text-sm text-gray-600">Dates</span>
-                   <span className="text-sm font-medium">{format(booking.checkIn, "MMM dd")} - {format(booking.checkOut, "MMM dd")}</span>
-               </div>
-            </div>
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Navbar />
+      <main className="flex-1 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md text-center p-8 space-y-6 shadow-2xl border-0 animate-in zoom-in-95 duration-500">
+          <div className="mx-auto w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mb-2">
+            <CheckCircle className="w-12 h-12" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Booking Confirmed!</h1>
+            <p className="text-gray-600 mt-2">
+              Your payment was successful and your slot is now secured.
+            </p>
+          </div>
 
-            <div className="flex items-center justify-center gap-2 text-sm text-gray-600 bg-white p-2 rounded">
-              <Mail className="w-4 h-4 text-emerald-600" />
-              <span>Confirmation sent to <strong>{booking.user.email}</strong></span>
+          <div className="space-y-2">
+            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Reference Number</p>
+            <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 font-mono text-lg font-bold text-emerald-900 select-all break-all shadow-inner">
+              {booking.id}
             </div>
-            
-            <div className="flex gap-3 justify-center pt-2">
-              <Button asChild variant="outline">
-                <a href="/">Return Home</a>
-              </Button>
-              <Button asChild className="bg-emerald-600 hover:bg-emerald-700">
-                <a href="/track">Track Booking</a>
-              </Button>
+          </div>
+
+          <Card className="bg-gray-50 border-gray-100 shadow-none overflow-hidden text-left">
+            <div className="bg-gray-100/50 px-4 py-2 border-b border-gray-100">
+              <span className="text-[10px] font-bold uppercase text-gray-500">Reservation Details</span>
+            </div>
+            <div className="p-4 space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500 underline underline-offset-4 decoration-gray-200">Guest</span>
+                <span className="text-sm font-semibold text-gray-900">{booking.user.name}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500 underline underline-offset-4 decoration-gray-200">Stay Duration</span>
+                <span className="text-sm font-semibold text-gray-900">{format(booking.checkIn, "MMM dd")} - {format(booking.checkOut, "MMM dd")}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500 underline underline-offset-4 decoration-gray-200">Unit</span>
+                <span className="text-sm font-semibold text-gray-900 text-right">{booking.unit.name}</span>
+              </div>
             </div>
           </Card>
-        </main>
-        <Footer />
-      </div>
-    )
+
+          <div className="flex items-center justify-center gap-2 text-sm text-emerald-700 bg-emerald-50/50 p-3 rounded-lg border border-emerald-100">
+            <Mail className="w-4 h-4" />
+            <span>A confirmation email has been sent.</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 pt-4">
+            <Button asChild variant="outline" className="h-11">
+              <a href="/">Home</a>
+            </Button>
+            <Button asChild className="bg-emerald-600 hover:bg-emerald-700 h-11 shadow-lg shadow-emerald-100">
+              <a href="/track">Track Booking</a>
+            </Button>
+          </div>
+        </Card>
+      </main>
+      <Footer />
+    </div>
+  )
 }
 
 function CancelledView({ bookingId }: { bookingId: string }) {
-    return (
-        <div className="min-h-screen bg-gray-50 flex flex-col">
-            <Navbar />
-            <main className="flex-1 flex items-center justify-center p-4">
-                <Card className="w-full max-w-md text-center p-8 space-y-6 shadow-md border-red-100">
-                    <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-600 mb-2">
-                        <XCircle className="w-8 h-8" />
-                    </div>
-                    <h1 className="text-xl font-bold text-gray-900">Payment Cancelled</h1>
-                    <p className="text-gray-600">You cancelled the payment process. No charges were made.</p>
-                    <Button asChild variant="outline">
-                        <a href={`/payment/${bookingId}`}>Try Again</a>
-                    </Button>
-                </Card>
-            </main>
-            <Footer />
-        </div>
-    )
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Navbar />
+      <main className="flex-1 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md text-center p-8 space-y-6 shadow-md border-red-100">
+          <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-600 mb-2">
+            <XCircle className="w-8 h-8" />
+          </div>
+          <h1 className="text-xl font-bold text-gray-900">Payment Cancelled</h1>
+          <p className="text-gray-600">You cancelled the payment process. No charges were made.</p>
+          <Button asChild variant="outline">
+            <a href={`/payment/${bookingId}`}>Try Again</a>
+          </Button>
+        </Card>
+      </main>
+      <Footer />
+    </div>
+  )
 }
