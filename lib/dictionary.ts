@@ -3,7 +3,7 @@ export const dictionary = {
     nav: {
       home: 'Home',
       book: 'Book Now',
-      track: 'My Booking',
+      track: 'Track Booking',
       location: 'Location',
       faq: 'FAQ',
     },
@@ -24,7 +24,7 @@ export const dictionary = {
     nav: {
       home: 'Home',
       book: 'Mag-book',
-      track: 'Ang Aking Booking',
+      track: 'I-track ang Booking',
       location: 'Lokasyon',
       faq: 'Tulong',
     },

@@ -33,7 +33,7 @@ interface UnitPricing {
 
 interface BookingFormProps {
   pricing: UnitPricing
-  blockedDates?: DateRange[] 
+  blockedDates?: DateRange[]
 }
 
 export function BookingForm({ pricing, blockedDates = [] }: BookingFormProps) {
@@ -56,7 +56,7 @@ export function BookingForm({ pricing, blockedDates = [] }: BookingFormProps) {
   const [guestMobile, setGuestMobile] = useState("")
   const [guestEmail, setGuestEmail] = useState("")
   const [termsAccepted, setTermsAccepted] = useState(false)
-  
+
   const [totalPrice, setTotalPrice] = useState(0)
   const [downPayment, setDownPayment] = useState(0)
   const [nights, setNights] = useState(0)
@@ -78,19 +78,32 @@ export function BookingForm({ pricing, blockedDates = [] }: BookingFormProps) {
     const paidHeads = adults + kids
     const extraHeads = Math.max(0, paidHeads - pricing.basePax)
     const nightlyRate = pricing.basePrice + (extraHeads * pricing.extraPaxPrice)
-    
+
     let total = nightlyRate * calculatedNights
 
     if (hasPWD) {
       total = total * 0.8
     }
 
-    setTotalPrice(total)
-    setDownPayment(total * 0.5)
+    const roundedTotal = Math.round(total)
+    setTotalPrice(roundedTotal)
 
-  }, [date, adults, kids, toddlers, hasPWD, pricing])
+    // Tiered Downpayment:
+    // < 5000 = 500
+    // 5000-10000 = 1000
+    // > 10000 = 1500
+    let dp = 50000
+    if (roundedTotal >= 1000000) {
+      dp = 150000
+    } else if (roundedTotal >= 500000) {
+      dp = 100000
+    }
 
-  const formatMoney = (val: number) => 
+    setDownPayment(dp)
+
+  }, [date, adults, kids, pricing, hasPWD])
+
+  const formatMoney = (val: number) =>
     new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(val / 100)
 
   const handlePayment = async () => {
@@ -143,9 +156,9 @@ export function BookingForm({ pricing, blockedDates = [] }: BookingFormProps) {
         <CardTitle className="flex justify-between items-center text-lg">
           <div className="flex items-center gap-2">
             {step === 2 && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="h-6 w-6 text-white hover:text-emerald-200 hover:bg-emerald-800 -ml-2"
                 onClick={() => setStep(1)}
               >
@@ -155,7 +168,7 @@ export function BookingForm({ pricing, blockedDates = [] }: BookingFormProps) {
             <span>{step === 1 ? "Booking Summary" : "Guest Details"}</span>
           </div>
           <span className="text-sm font-normal text-emerald-200">
-             {formatMoney(pricing.basePrice)} / night
+            {formatMoney(pricing.basePrice)} / night
           </span>
         </CardTitle>
       </CardHeader>
@@ -207,47 +220,47 @@ export function BookingForm({ pricing, blockedDates = [] }: BookingFormProps) {
             <Separator />
 
             <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-1">
-                  <Label className="text-xs">Adults</Label>
-                  <Input type="number" min={1} max={20} value={adults} onChange={(e) => setAdults(Number(e.target.value))} />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Kids (5+)</Label>
-                  <Input type="number" min={0} value={kids} onChange={(e) => setKids(Number(e.target.value))} />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Toddlers</Label>
-                  <Input type="number" min={0} value={toddlers} onChange={(e) => setToddlers(Number(e.target.value))} />
-                </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Adults</Label>
+                <Input type="number" min={1} max={20} value={adults} onChange={(e) => setAdults(Number(e.target.value))} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Kids (5+)</Label>
+                <Input type="number" min={0} value={kids} onChange={(e) => setKids(Number(e.target.value))} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Toddlers</Label>
+                <Input type="number" min={0} value={toddlers} onChange={(e) => setToddlers(Number(e.target.value))} />
+              </div>
             </div>
 
             <Separator />
 
             <div className="space-y-3">
-               <div className={cn("flex items-start space-x-2 p-3 rounded-lg border", hasCar ? "bg-emerald-50 border-emerald-200" : "border-gray-100")}>
-                  <Checkbox id="car" checked={hasCar} onCheckedChange={(c) => setHasCar(!!c)} />
-                  <div className="grid gap-1.5 leading-none">
-                    <Label htmlFor="car" className="text-sm font-medium leading-none flex items-center gap-2">
-                      <Car className="w-3 h-3" /> Bringing a Car?
-                    </Label>
-                    <p className="text-xs text-gray-500">Strictly 1 slot only.</p>
-                  </div>
-               </div>
-               <div className="flex items-center space-x-2">
-                  <Checkbox id="pwd" checked={hasPWD} onCheckedChange={(c) => setHasPWD(!!c)} />
-                  <Label htmlFor="pwd" className="text-sm font-medium">PWD / Senior (20% Off)</Label>
-               </div>
-               <div className="flex items-center space-x-2">
-                  <Checkbox id="pet" checked={hasPet} onCheckedChange={(c) => setHasPet(!!c)} />
-                  <Label htmlFor="pet" className="text-sm font-medium">Pet (Must wear diaper)</Label>
-               </div>
+              <div className={cn("flex items-start space-x-2 p-3 rounded-lg border", hasCar ? "bg-emerald-50 border-emerald-200" : "border-gray-100")}>
+                <Checkbox id="car" checked={hasCar} onCheckedChange={(c) => setHasCar(!!c)} />
+                <div className="grid gap-1.5 leading-none">
+                  <Label htmlFor="car" className="text-sm font-medium leading-none flex items-center gap-2">
+                    <Car className="w-3 h-3" /> Bringing a Car?
+                  </Label>
+                  <p className="text-xs text-gray-500">Strictly 1 slot only.</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox id="pwd" checked={hasPWD} onCheckedChange={(c) => setHasPWD(!!c)} />
+                <Label htmlFor="pwd" className="text-sm font-medium">PWD / Senior (20% Off)</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox id="pet" checked={hasPet} onCheckedChange={(c) => setHasPet(!!c)} />
+                <Label htmlFor="pet" className="text-sm font-medium">Pet (Must wear diaper)</Label>
+              </div>
             </div>
           </>
         ) : (
           <>
             <div className="space-y-4 animate-in slide-in-from-right-4 fade-in duration-300">
               <div className="bg-emerald-50 p-3 rounded-lg text-sm text-emerald-800 mb-4 border border-emerald-100">
-                 <strong>Reservation for:</strong> {nights} Nights • {adults + kids} Pax
+                <strong>Reservation for:</strong> {nights} Nights • {adults + kids} Pax
               </div>
 
               <div className="space-y-2">
@@ -266,31 +279,39 @@ export function BookingForm({ pricing, blockedDates = [] }: BookingFormProps) {
               </div>
 
               <div className="flex items-start space-x-2 pt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                 <Checkbox 
-                    id="terms" 
-                    checked={termsAccepted} 
-                    onCheckedChange={(c) => setTermsAccepted(!!c)} 
-                    className="mt-0.5"
-                 />
-                 <Label htmlFor="terms" className="text-xs text-gray-600 font-normal leading-normal cursor-pointer">
-                   I agree to the <strong>House Rules</strong> and understand that the downpayment is non-refundable. 
-                   <br/><span className="text-[10px] text-gray-400">(Required to proceed)</span>
-                 </Label>
+                <Checkbox
+                  id="terms"
+                  checked={termsAccepted}
+                  onCheckedChange={(c) => setTermsAccepted(!!c)}
+                  className="mt-0.5"
+                />
+                <Label htmlFor="terms" className="text-xs text-gray-600 font-normal leading-normal cursor-pointer">
+                  I agree to the <strong>House Rules</strong> and understand that the downpayment is non-refundable.
+                  <br /><span className="text-[10px] text-gray-400">(Required to proceed)</span>
+                </Label>
               </div>
             </div>
           </>
         )}
 
         {totalPrice > 0 && (
-          <div className="bg-gray-50 p-4 rounded-lg space-y-2 border border-gray-100">
-             <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Total Bill</span>
-                <span className="font-bold text-gray-900">{formatMoney(totalPrice)}</span>
-             </div>
-             <div className="flex justify-between text-sm text-emerald-700">
-                <span>Downpayment (50%)</span>
-                <span className="font-bold text-lg">{formatMoney(downPayment)}</span>
-             </div>
+          <div className="bg-emerald-50/50 p-4 rounded-xl space-y-3 border border-emerald-100">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-semibold text-emerald-900">Required Downpayment</span>
+              <span className="text-xl font-black text-emerald-700">{formatMoney(downPayment)}</span>
+            </div>
+            <p className="text-[10px] text-emerald-600 leading-tight">Pay this now via PayMongo to secure your booking slot instantly.</p>
+
+            <Separator className="bg-emerald-100" />
+
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-600 font-medium">Balance at Check-in</span>
+              <span className="font-bold text-gray-900">{formatMoney(totalPrice - downPayment)}</span>
+            </div>
+            <div className="flex justify-between items-center text-[10px] text-gray-400">
+              <span>Total Bill</span>
+              <span>{formatMoney(totalPrice)}</span>
+            </div>
           </div>
         )}
 
@@ -305,16 +326,16 @@ export function BookingForm({ pricing, blockedDates = [] }: BookingFormProps) {
 
       <CardFooter>
         {step === 1 ? (
-          <Button 
-            className="w-full h-12 text-lg font-bold bg-emerald-600 hover:bg-emerald-700" 
+          <Button
+            className="w-full h-12 text-lg font-bold bg-emerald-600 hover:bg-emerald-700"
             disabled={!date?.from || !date?.to || (adults + kids) > pricing.maxPax}
             onClick={() => setStep(2)}
           >
             {date?.from ? 'Proceed to Details' : 'Select Dates'}
           </Button>
         ) : (
-          <Button 
-            className="w-full h-12 text-lg font-bold bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-200" 
+          <Button
+            className="w-full h-12 text-lg font-bold bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-200"
             disabled={!guestName || !guestMobile || !termsAccepted || isSubmitting}
             onClick={handlePayment}
           >

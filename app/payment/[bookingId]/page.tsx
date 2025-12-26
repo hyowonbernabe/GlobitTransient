@@ -13,6 +13,9 @@ import { PaymentStatusPoller } from "@/components/payment/PaymentStatusPoller"
 
 export const dynamic = 'force-dynamic'
 
+const formatMoney = (val: number) =>
+  new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(val / 100)
+
 interface PageProps {
   params: Promise<{ bookingId: string }>
   searchParams: Promise<{ success?: string; cancelled?: string }>
@@ -56,8 +59,6 @@ export default async function PaymentPage(props: PageProps) {
   }
 
   // 3. Standard Checkout View
-  const formatMoney = (val: number) =>
-    new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(val / 100)
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
@@ -100,9 +101,16 @@ export default async function PaymentPage(props: PageProps) {
                     </div>
                   </div>
                   <Separator />
-                  <div className="flex justify-between items-center text-lg font-bold text-emerald-800">
-                    <span>Pay Now (50%)</span>
-                    <span>{formatMoney(booking.downpayment)}</span>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center text-lg font-bold text-emerald-800">
+                      <span>Pay Now (Downpayment)</span>
+                      <span>{formatMoney(booking.downpayment)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                      <span>Remaining Balance</span>
+                      <span className="font-semibold">{formatMoney(booking.totalPrice - booking.downpayment)}</span>
+                    </div>
+                    <p className="text-[10px] text-gray-400 text-center italic">Remaining balance to be settled upon check-in.</p>
                   </div>
                 </CardContent>
               </Card>
@@ -154,6 +162,10 @@ function SuccessView({ booking }: { booking: any }) {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-500 underline underline-offset-4 decoration-gray-200">Unit</span>
                 <span className="text-sm font-semibold text-gray-900 text-right">{booking.unit.name}</span>
+              </div>
+              <div className="flex justify-between items-center text-emerald-700 font-bold border-t border-emerald-100 pt-2 mt-2">
+                <span className="text-sm">Balance at Check-in</span>
+                <span className="text-base">{formatMoney(booking.totalPrice - booking.downpayment)}</span>
               </div>
             </div>
           </Card>

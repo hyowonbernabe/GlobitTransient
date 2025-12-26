@@ -54,8 +54,8 @@ export async function initiateCheckout(bookingId: string) {
             {
               currency: 'PHP',
               amount: booking.downpayment,
-              description: `50% Downpayment for ${booking.unit.name}`,
-              name: 'Reservation Downpayment',
+              description: `Reservation Downpayment for ${booking.unit.name}`,
+              name: 'Booking Downpayment',
               quantity: 1,
               ...(validImages.length > 0 && { images: [validImages[0]] })
             }

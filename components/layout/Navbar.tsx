@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, Search, CalendarDays } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/lib/i18n-context'
 import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher'
@@ -78,8 +78,8 @@ export function Navbar() {
             </Link>
           ))}
           <div className="flex items-center justify-between pt-4 mt-2 border-t border-gray-100">
-             <span className="text-sm text-gray-500">Language</span>
-             <LanguageSwitcher />
+            <span className="text-sm text-gray-500">Language</span>
+            <LanguageSwitcher />
           </div>
         </div>
       )}

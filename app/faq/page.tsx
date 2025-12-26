@@ -31,11 +31,11 @@ export default function FaqPage() {
     },
     {
       question: "How do I confirm my booking?",
-      answer: "A 50% downpayment is required to secure your reservation. Bookings are only confirmed once the proof of payment (GCash) is uploaded and verified by our admin. Unpaid reservations are automatically cancelled after 24 hours."
+      answer: "We require a small fixed downpayment to secure your reservation (500 PHP, 1,000 PHP, or 1,500 PHP depending on your total bill). Payments are processed securely via PayMongo (GCash, Maya, or Card). Your booking is instantly confirmed once payment is successful."
     },
     {
       question: "What is your cancellation policy?",
-      answer: "The 50% downpayment is non-refundable. If you need to re-schedule, please contact us at least 7 days before your scheduled arrival, subject to date availability."
+      answer: "The downpayment is non-refundable as it secures your slot and prevents other guests from booking those dates. If you need to re-schedule, please contact us at least 7 days before your arrival, subject to availability."
     },
   ]
 
