@@ -5,10 +5,13 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useI18n } from '@/lib/i18n-context'
+import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher'
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
+  const { t } = useI18n()
 
   // STRICTLY HIDE on Admin and Portal routes
   if (pathname?.startsWith('/admin') || pathname?.startsWith('/portal')) {
@@ -18,11 +21,11 @@ export function Navbar() {
   const toggleMenu = () => setIsOpen(!isOpen)
 
   const navLinks = [
-    { href: '/', label: 'Home' },
-    { href: '/book', label: 'Book Now' },
-    { href: '/track', label: 'My Booking' },
-    { href: '/#location', label: 'Location' },
-    { href: '/faq', label: 'FAQ' },
+    { href: '/', label: t('nav.home') },
+    { href: '/book', label: t('nav.book') },
+    { href: '/track', label: t('nav.track') },
+    { href: '/#location', label: t('nav.location') },
+    { href: '/faq', label: t('nav.faq') },
   ]
 
   return (
@@ -46,9 +49,7 @@ export function Navbar() {
             </Link>
           ))}
           <div className="h-4 w-px bg-gray-300 mx-2" />
-          <Button variant="ghost" size="sm" className="text-gray-500 hover:text-primary">
-            FIL
-          </Button>
+          <LanguageSwitcher />
         </div>
 
         {/* Mobile Burger */}
@@ -78,10 +79,7 @@ export function Navbar() {
           ))}
           <div className="flex items-center justify-between pt-4 mt-2 border-t border-gray-100">
              <span className="text-sm text-gray-500">Language</span>
-             <div className="flex gap-2">
-               <Button variant="secondary" size="sm" className="bg-emerald-50 text-primary font-bold">EN</Button>
-               <Button variant="ghost" size="sm" className="text-gray-500">FIL</Button>
-             </div>
+             <LanguageSwitcher />
           </div>
         </div>
       )}

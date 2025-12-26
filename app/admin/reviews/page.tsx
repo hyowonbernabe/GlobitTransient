@@ -8,15 +8,31 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Star, Trash2, MessageSquare } from 'lucide-react'
 import { deleteReview } from '@/server/actions/review-admin'
 import { formatDistanceToNow } from 'date-fns'
 
 export const dynamic = 'force-dynamic'
 
+// Define the exact shape of data returned by the query
+interface ReviewData {
+  id: string
+  rating: number
+  comment: string | null
+  createdAt: Date
+  unit: {
+    name: string
+  }
+  user: {
+    name: string | null
+    email: string | null
+  }
+}
+
 async function getAllReviews() {
-  return await prisma.review.findMany({
+  // Cast to any to bypass potential missing model types in generated client
+  // then cast result to our interface
+  const reviews = await (prisma as any).review.findMany({
     orderBy: { createdAt: 'desc' },
     include: {
       unit: {
@@ -27,6 +43,8 @@ async function getAllReviews() {
       }
     }
   })
+  
+  return reviews as ReviewData[]
 }
 
 export default async function ReviewsPage() {
