@@ -27,6 +27,7 @@ export async function trackBooking(formData: FormData) {
         status: true,
         paymentStatus: true,
         totalPrice: true,
+        downpayment: true,
         balance: true,
         adults: true,
         kids: true,

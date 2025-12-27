@@ -30,15 +30,17 @@ const formatMoney = (val: number) =>
 export function BookingSuccess({ booking }: BookingSuccessProps) {
     const { width, height } = useWindowSize()
     const [showConfetti, setShowConfetti] = useState(true)
+    const [isMounted, setIsMounted] = useState(false)
 
     useEffect(() => {
+        setIsMounted(true)
         const timer = setTimeout(() => setShowConfetti(false), 8000) // Stop confetti after 8s
         return () => clearTimeout(timer)
     }, [])
 
     return (
         <div className="w-full max-w-md mx-auto">
-            {showConfetti && <Confetti width={width} height={height} recycle={true} numberOfPieces={200} />}
+            {isMounted && showConfetti && <Confetti width={width} height={height} recycle={true} numberOfPieces={200} />}
 
             <Card className="text-center p-8 space-y-8 shadow-2xl border-0 ring-1 ring-emerald-100 bg-white/95 backdrop-blur-sm animate-in zoom-in-95 duration-700">
                 <div className="relative mx-auto w-24 h-24 flex items-center justify-center">
