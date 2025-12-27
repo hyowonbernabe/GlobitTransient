@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createManualBooking, blockUnitDates } from '@/server/actions/booking-admin'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -39,12 +39,26 @@ interface Unit {
   name: string
 }
 
-export function ManualBookingDialog({ units }: { units: Unit[] }) {
+export function ManualBookingDialog() {
+  const [units, setUnits] = useState<Unit[]>([])
+
+  useEffect(() => {
+    async function fetchUnits() {
+      try {
+        const res = await fetch('/api/units')
+        const data = await res.json()
+        setUnits(data)
+      } catch (error) {
+        console.error('Failed to fetch units:', error)
+      }
+    }
+    fetchUnits()
+  }, [])
   const [open, setOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [mode, setMode] = useState<'book' | 'block'>('book')
-  
+
   // Shared Form State
   const [unitId, setUnitId] = useState<string>('')
   const [date, setDate] = useState<DateRange | undefined>()
@@ -74,7 +88,7 @@ export function ManualBookingDialog({ units }: { units: Unit[] }) {
   }
 
   async function submitAction(
-    action: (fd: FormData) => Promise<{ error?: string; success?: boolean }>, 
+    action: (fd: FormData) => Promise<{ error?: string; success?: boolean }>,
     extraData: Record<string, string>
   ) {
     setIsSaving(true)
@@ -87,11 +101,11 @@ export function ManualBookingDialog({ units }: { units: Unit[] }) {
     // @ts-ignore
     formData.append('checkOut', date.to.toISOString())
     formData.append('notes', notes)
-    
+
     Object.entries(extraData).forEach(([key, val]) => formData.append(key, val))
-    
+
     const result = await action(formData)
-    
+
     if (result?.error) {
       setError(result.error)
       setIsSaving(false)
@@ -127,7 +141,7 @@ export function ManualBookingDialog({ units }: { units: Unit[] }) {
             Register a walk-in guest or block dates for maintenance.
           </DialogDescription>
         </DialogHeader>
-        
+
         <Tabs defaultValue="book" onValueChange={(v) => setMode(v as 'book' | 'block')}>
           <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="book" className="flex gap-2">
@@ -197,19 +211,19 @@ export function ManualBookingDialog({ units }: { units: Unit[] }) {
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="guestName">Guest Name <span className="text-red-500">*</span></Label>
-                  <Input 
-                    id="guestName" 
-                    placeholder="Juan Dela Cruz" 
+                  <Input
+                    id="guestName"
+                    placeholder="Juan Dela Cruz"
                     value={guestName}
                     onChange={(e) => setGuestName(e.target.value)}
                   />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="amount">Amount (PHP)</Label>
-                  <Input 
-                    id="amount" 
+                  <Input
+                    id="amount"
                     type="number"
-                    placeholder="0.00" 
+                    placeholder="0.00"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                   />
@@ -236,8 +250,8 @@ export function ManualBookingDialog({ units }: { units: Unit[] }) {
 
             <div className="grid gap-2">
               <Label htmlFor="notes">Notes</Label>
-              <Input 
-                id="notes" 
+              <Input
+                id="notes"
                 placeholder={mode === 'book' ? "Payment details..." : "Additional details..."}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -253,10 +267,10 @@ export function ManualBookingDialog({ units }: { units: Unit[] }) {
           )}
 
           <DialogFooter className="mt-4">
-            <Button 
-              type="submit" 
-              disabled={isSaving} 
-              onClick={mode === 'book' ? handleBook : handleBlock} 
+            <Button
+              type="submit"
+              disabled={isSaving}
+              onClick={mode === 'book' ? handleBook : handleBlock}
               className={mode === 'book' ? "bg-emerald-600 hover:bg-emerald-700" : "bg-red-600 hover:bg-red-700"}
             >
               {isSaving ? (
