@@ -55,8 +55,7 @@ export async function createBooking(data: z.infer<typeof createBookingSchema>) {
       extraPaxPrice: unit.extraPaxPrice,
       checkIn,
       checkOut,
-      adults: rest.adults,
-      kids: rest.kids,
+      pax: rest.pax,
       hasPWD: rest.hasPWD
     })
 
@@ -64,7 +63,7 @@ export async function createBooking(data: z.infer<typeof createBookingSchema>) {
       where: {
         OR: [
           { mobile: guestMobile },
-          { email: guestEmail || undefined } 
+          { email: guestEmail || undefined }
         ]
       }
     })
@@ -101,9 +100,7 @@ export async function createBooking(data: z.infer<typeof createBookingSchema>) {
         agentId, // Attach Agent here
         checkIn,
         checkOut,
-        adults: rest.adults,
-        kids: rest.kids,
-        toddlers: rest.toddlers,
+        pax: rest.pax,
         hasCar: rest.hasCar,
         hasPet: rest.hasPet,
         hasPWD: rest.hasPWD,

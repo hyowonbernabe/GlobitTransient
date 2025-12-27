@@ -75,11 +75,6 @@ model Unit {
   basePax        Int      
   extraPaxPrice  Int      
   
-  hasTV          Boolean @default(false)
-  hasRef         Boolean @default(false)
-  hasHeater      Boolean @default(false)
-  hasOwnCR       Boolean @default(true)
-  
   bookings       Booking[]
   reviews        Review[]
 }
@@ -97,9 +92,7 @@ model Booking {
   checkIn           DateTime
   checkOut          DateTime
   
-  adults            Int
-  kids              Int
-  toddlers          Int
+  pax               Int
   hasPWD            Boolean   @default(false)
   
   hasCar            Boolean   @default(false)

@@ -6,14 +6,13 @@ interface PricingRules {
   extraPaxPrice: number
   checkIn: Date
   checkOut: Date
-  adults: number
-  kids: number
+  pax: number
   hasPWD: boolean
 }
 
 export function calculateBookingPrice(rules: PricingRules) {
   const nights = Math.max(1, differenceInCalendarDays(rules.checkOut, rules.checkIn))
-  const paidHeads = rules.adults + rules.kids
+  const paidHeads = rules.pax
   const extraHeads = Math.max(0, paidHeads - rules.basePax)
 
   const nightlyRate = rules.basePrice + (extraHeads * rules.extraPaxPrice)
