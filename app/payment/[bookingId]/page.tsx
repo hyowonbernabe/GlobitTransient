@@ -11,6 +11,7 @@ import { format } from "date-fns"
 import { PaymentCheckout } from "@/components/payment/PaymentCheckout"
 import { PaymentStatusPoller } from "@/components/payment/PaymentStatusPoller"
 import { BookingSuccess } from "@/components/payment/BookingSuccess"
+import { PaymentFailed } from "@/components/payment/PaymentFailed"
 
 export const dynamic = 'force-dynamic'
 
@@ -62,9 +63,41 @@ export default async function PaymentPage(props: PageProps) {
     )
   }
 
-  // 2. Cancelled View
+  // 2. Failed / Cancelled Views
   if (searchParams.cancelled === 'true') {
-    return <CancelledView bookingId={booking.id} />
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center p-4 pt-24">
+          <PaymentFailed bookingId={booking.id} reason="cancelled" />
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (searchParams.failed === 'true') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center p-4 pt-24">
+          <PaymentFailed bookingId={booking.id} reason="failed" />
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (searchParams.expired === 'true') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center p-4 pt-24">
+          <PaymentFailed bookingId={booking.id} reason="expired" />
+        </main>
+        <Footer />
+      </div>
+    )
   }
 
   // 3. Standard Checkout View
@@ -134,23 +167,3 @@ export default async function PaymentPage(props: PageProps) {
 
 
 
-function CancelledView({ bookingId }: { bookingId: string }) {
-  return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar />
-      <main className="flex-1 flex items-center justify-center p-4 pt-24">
-        <Card className="w-full max-w-md text-center p-8 space-y-6 shadow-md border-red-100">
-          <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-600 mb-2">
-            <XCircle className="w-8 h-8" />
-          </div>
-          <h1 className="text-xl font-bold text-gray-900">Payment Cancelled</h1>
-          <p className="text-gray-600">You cancelled the payment process. No charges were made.</p>
-          <Button asChild variant="outline">
-            <a href={`/payment/${bookingId}`}>Try Again</a>
-          </Button>
-        </Card>
-      </main>
-      <Footer />
-    </div>
-  )
-}
