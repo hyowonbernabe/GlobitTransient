@@ -27,41 +27,65 @@ export function PaymentStatusPoller({ bookingId }: { bookingId: string }) {
                 console.error("Polling error:", e)
             }
             setRetryCount(c => c + 1)
-        }, 2500) // Slightly faster polling
+        }, 2000)
 
         return () => clearInterval(interval)
     }, [bookingId, router, isConfirmed])
 
     return (
-        <Card className="w-full max-w-md text-center p-8 space-y-6 shadow-xl border-t-4 border-t-emerald-500">
-            <div className="mx-auto w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 mb-2">
-                {isConfirmed ? (
-                    <Loader2 className="w-10 h-10 animate-spin" /> // Keep spinning while router refreshes
-                ) : (
-                    <Loader2 className="w-10 h-10 animate-spin" />
+        <Card className="w-full max-w-md text-center p-10 space-y-8 shadow-2xl border-0 ring-1 ring-emerald-100 bg-white/95 backdrop-blur-sm">
+            <div className="relative mx-auto w-24 h-24 flex items-center justify-center">
+                {/* Pulsing Background */}
+                {!isConfirmed && (
+                    <>
+                        <div className="absolute inset-0 bg-emerald-100 rounded-full animate-ping opacity-20 duration-1000" />
+                        <div className="absolute inset-2 bg-emerald-50 rounded-full animate-pulse" />
+                    </>
                 )}
-            </div>
-            <div>
-                <CardTitle className="text-2xl font-bold text-gray-900">
-                    {isConfirmed ? "Payment Verified!" : "Verifying Payment..."}
-                </CardTitle>
-                <p className="text-gray-600 mt-2">
-                    {isConfirmed
-                        ? "Redirecting you to your confirmation details..."
-                        : "We are confirming your transaction with the payment provider. This usually takes a few seconds."}
-                </p>
+
+                <div className={`relative z-10 w-20 h-20 rounded-full flex items-center justify-center transition-all duration-500 ${isConfirmed ? 'bg-emerald-100 text-emerald-600' : 'bg-white text-emerald-600 border border-emerald-100'}`}>
+                    {isConfirmed ? (
+                        <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                    ) : (
+                        <Loader2 className="w-10 h-10 animate-spin" />
+                    )}
+                </div>
             </div>
 
-            {!isConfirmed && (
-                <div className="bg-gray-50 text-gray-500 p-4 rounded-lg text-sm border border-gray-100 italic">
-                    Waiting for confirmation... (Attempt {retryCount})
+            <div className="space-y-3">
+                <CardTitle className="text-3xl font-bold text-gray-900 tracking-tight">
+                    {isConfirmed ? "Payment Verified" : "Verifying & Securing Slot..."}
+                </CardTitle>
+                <div className="space-y-1">
+                    <p className="text-gray-600 text-lg">
+                        {isConfirmed
+                            ? "Redirecting you to the confirmation page."
+                            : "Please wait while we confirm your transaction."}
+                    </p>
+                    {!isConfirmed && (
+                        <p className="text-xs text-emerald-600 font-medium animate-pulse">
+                            Do not close this window.
+                        </p>
+                    )}
+                </div>
+            </div>
+
+            {/* Slow Network Feedback */}
+            {retryCount > 8 && !isConfirmed && (
+                <div className="bg-amber-50 text-amber-900/80 p-4 rounded-xl text-sm border border-amber-100 flex items-center justify-center gap-2">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <span>Taking longer than usual... still checking.</span>
                 </div>
             )}
 
-            <Button onClick={() => router.refresh()} variant="outline" className="w-full gap-2 font-semibold">
-                <RefreshCcw className="w-4 h-4" />
-                Refresh Page
-            </Button>
+            {!isConfirmed && (
+                <Button onClick={() => router.refresh()} variant="ghost" className="text-xs text-gray-400 hover:text-gray-600">
+                    <RefreshCcw className="w-3 h-3 mr-1" />
+                    Stuck? Click to Refresh
+                </Button>
+            )}
         </Card>
     )
 }
