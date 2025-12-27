@@ -14,39 +14,58 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger)
 }
 
+// Define a type that includes the review stats
+export interface UnitWithStats extends Unit {
+  _count?: {
+    reviews: number
+  }
+  reviews?: {
+    rating: number
+  }[]
+  // Alternatively, if we pass stats separately:
+  avgRating?: number
+  reviewCount?: number
+}
+
 interface FeaturedUnitsProps {
-  units: Unit[]
+  units: UnitWithStats[]
 }
 
 export function FeaturedUnits({ units }: FeaturedUnitsProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useGSAP(() => {
-    // Staggered Entry Animation for Cards
-    gsap.from(".featured-card", {
-      y: 80,
-      opacity: 0,
-      duration: 1,
-      stagger: 0.3,
-      ease: "power3.out",
-      scrollTrigger: {
-        trigger: containerRef.current,
-        start: "top 80%", // Start animation when top of section hits 80% of viewport height
-        toggleActions: "play none none reverse" // Play on enter, reverse on leave back up
+    // 1. Header Reveal - Smooth fade up
+    gsap.fromTo(".featured-header", 
+      { y: 30, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.8,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: "top 80%",
+        }
       }
-    });
+    );
 
-    // Header Reveal
-    gsap.from(".featured-header", {
-      y: 30,
-      opacity: 0,
-      duration: 0.8,
-      ease: "power2.out",
-      scrollTrigger: {
-        trigger: containerRef.current,
-        start: "top 90%",
+    // 2. Card Entry - Staggered with fromTo for stability
+    gsap.fromTo(".featured-card", 
+      { y: 60, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.8,
+        stagger: 0.2,
+        ease: "power2.out", // Smoother ease
+        scrollTrigger: {
+          trigger: ".featured-grid", // Trigger on the grid specifically
+          start: "top 85%",
+        },
+        clearProps: "all" // Important: clear transform so hover effects work cleanly
       }
-    });
+    );
   }, { scope: containerRef })
 
   if (!units || units.length === 0) return null;
@@ -69,22 +88,26 @@ export function FeaturedUnits({ units }: FeaturedUnitsProps) {
           </p>
         </div>
 
-        {/* Units Grid - Use items-stretch to force equal height */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-stretch">
+        {/* Units Grid */}
+        {/* 'items-stretch' ensures both cards have the same height if one content is longer */}
+        <div className="featured-grid grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-stretch">
           {units.map((unit) => {
-            // Determine "Best For" tag based on unit type
             const isBigHouse = unit.slug === 'big-house';
             const tag = isBigHouse ? "Best for Large Groups" : "Best for Families";
             
-            // Hardcoded amenities for display priority (since DB amenities might be generic)
             const displayAmenities = isBigHouse 
                 ? ["Spacious Living Area", "Full Kitchen", "Private Balcony"] 
                 : ["Scenic View", "Cozy Ambience", "Smart TV"];
 
+            // Calculate Rating from passed data
+            // (Assumes parent passes avgRating/reviewCount or raw reviews)
+            const rating = unit.avgRating || 0;
+            const count = unit.reviewCount || 0;
+
             return (
               <div 
                 key={unit.id} 
-                className="featured-card group relative flex flex-col bg-white rounded-[2rem] overflow-hidden shadow-2xl shadow-gray-100 border border-gray-100 transition-transform hover:-translate-y-1 duration-300 h-full"
+                className="featured-card group relative flex flex-col bg-white rounded-[2rem] overflow-hidden shadow-2xl shadow-gray-100 border border-gray-100 h-full transform-gpu transition-all duration-300 hover:-translate-y-1"
               >
                 {/* Image Section */}
                 <div className="relative h-[300px] md:h-[400px] w-full overflow-hidden shrink-0">
@@ -98,13 +121,13 @@ export function FeaturedUnits({ units }: FeaturedUnitsProps) {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
                   
                   {/* Floating Price Tag */}
-                  <div className="absolute top-6 right-6 bg-white/95 backdrop-blur-md px-4 py-2 rounded-2xl shadow-lg">
+                  <div className="absolute top-6 right-6 bg-white/95 backdrop-blur-md px-4 py-2 rounded-2xl shadow-lg z-10">
                     <span className="text-xs text-gray-500 font-bold uppercase tracking-wider block">From</span>
                     <span className="text-xl font-bold text-gray-900">₱{(unit.basePrice / 100).toLocaleString()}</span>
                   </div>
 
                   {/* Mobile Title Overlay */}
-                  <div className="absolute bottom-0 left-0 p-6 md:hidden">
+                  <div className="absolute bottom-0 left-0 p-6 md:hidden z-10">
                      <div className="inline-block px-3 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded-full mb-2">
                         {tag}
                      </div>
@@ -112,23 +135,27 @@ export function FeaturedUnits({ units }: FeaturedUnitsProps) {
                   </div>
                 </div>
 
-                {/* Content Section */}
+                {/* Content Section - flex-1 ensures it fills available space */}
                 <div className="flex-1 p-6 md:p-10 flex flex-col">
+                  
                   {/* Desktop Title & Tag */}
                   <div className="hidden md:block mb-6">
-                    <div className="flex justify-between items-start">
+                    <div className="flex justify-between items-start gap-4">
                         <div>
                             <div className="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full mb-3">
                                 {tag}
                             </div>
-                            <h3 className="text-3xl font-bold text-gray-900">{unit.name}</h3>
+                            <h3 className="text-3xl font-bold text-gray-900 leading-tight">{unit.name}</h3>
                         </div>
-                        {/* Rating Placeholder */}
-                        <div className="flex items-center gap-1 text-amber-400">
-                            <Star size={18} className="fill-amber-400"/>
-                            <span className="text-gray-700 font-bold">4.9</span>
-                            <span className="text-gray-400 text-sm">(120+)</span>
-                        </div>
+                        
+                        {/* Dynamic Rating Display */}
+                        {count > 0 && (
+                            <div className="flex items-center gap-1.5 bg-amber-50 px-3 py-1.5 rounded-full shrink-0">
+                                <Star size={16} className="fill-amber-400 text-amber-400"/>
+                                <span className="text-gray-900 font-bold text-sm">{rating.toFixed(1)}</span>
+                                <span className="text-gray-400 text-xs">({count})</span>
+                            </div>
+                        )}
                     </div>
                   </div>
 
@@ -140,13 +167,13 @@ export function FeaturedUnits({ units }: FeaturedUnitsProps) {
                   {/* Specs Grid */}
                   <div className="grid grid-cols-2 gap-4 mb-8">
                      <div className="flex items-center gap-3 text-gray-700 font-medium">
-                        <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-emerald-600">
+                        <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-emerald-600 shrink-0">
                             <Users size={20} />
                         </div>
                         <span>Up to {unit.maxPax} Guests</span>
                      </div>
                      <div className="flex items-center gap-3 text-gray-700 font-medium">
-                        <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-emerald-600">
+                        <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-emerald-600 shrink-0">
                             <Bed size={20} />
                         </div>
                         <span>{unit.basePax} Beds</span>
@@ -165,7 +192,7 @@ export function FeaturedUnits({ units }: FeaturedUnitsProps) {
                     ))}
                   </ul>
 
-                  {/* Actions */}
+                  {/* Actions - mt-auto pushes this to the bottom */}
                   <div className="mt-auto pt-6 border-t border-gray-100 flex items-center gap-4">
                     <Link 
                         href={`/book/${unit.slug}`} 
@@ -175,7 +202,7 @@ export function FeaturedUnits({ units }: FeaturedUnitsProps) {
                     </Link>
                     <Link 
                         href={`/book/${unit.slug}`} 
-                        className="hidden md:inline-flex items-center justify-center w-14 h-14 bg-gray-50 text-gray-900 rounded-xl hover:bg-gray-100 transition-colors border border-gray-200"
+                        className="hidden md:inline-flex items-center justify-center w-14 h-14 bg-gray-50 text-gray-900 rounded-xl hover:bg-gray-100 transition-colors border border-gray-200 shrink-0"
                         title="View Details"
                     >
                         <ArrowRight size={24} />
@@ -188,11 +215,11 @@ export function FeaturedUnits({ units }: FeaturedUnitsProps) {
           })}
         </div>
 
-        {/* View All CTA - Moved outside and ensured spacing */}
-        <div className="mt-16 text-center relative z-10">
+        {/* View All CTA - Added extra padding top to ensure separation */}
+        <div className="mt-20 pt-4 text-center relative z-10">
             <Link 
                 href="/book" 
-                className="inline-flex items-center gap-2 text-gray-500 font-bold hover:text-emerald-600 transition-colors group"
+                className="inline-flex items-center gap-2 text-gray-500 font-bold hover:text-emerald-600 transition-colors group px-6 py-3 rounded-full hover:bg-emerald-50"
             >
                 View all accommodation options
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />

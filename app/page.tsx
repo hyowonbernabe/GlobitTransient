@@ -11,18 +11,36 @@ import prisma from "@/lib/prisma"
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
-  // Fetch only the featured units
-  const featuredUnits = await prisma.unit.findMany({
+  // Fetch featured units with their reviews
+  const featuredUnitsData = await prisma.unit.findMany({
     where: {
       slug: {
         in: ['big-house', 'veranda-unit']
       }
+    },
+    include: {
+      reviews: {
+        select: {
+          rating: true
+        }
+      }
     }
   });
 
-  // Sort them to ensure Big House or Veranda comes first as desired (optional)
-  // Let's ensure Big House is first if both exist
-  const sortedUnits = featuredUnits.sort((a, b) => {
+  // Calculate stats manually since we are using 'include' not 'aggregate' per unit in a single query comfortably with findMany in basic Prisma
+  const sortedUnits = featuredUnitsData.map(unit => {
+    const totalReviews = unit.reviews.length;
+    const avgRating = totalReviews > 0 
+      ? unit.reviews.reduce((acc, curr) => acc + curr.rating, 0) / totalReviews 
+      : 0;
+
+    return {
+      ...unit,
+      reviewCount: totalReviews,
+      avgRating: avgRating
+    };
+  }).sort((a, b) => {
+      // Sort logic: Big House first
       if (a.slug === 'big-house') return -1;
       if (b.slug === 'big-house') return 1;
       return 0;
