@@ -4,10 +4,13 @@ import * as React from "react"
 import { useRef } from "react"
 import { Unit } from "@prisma/client"
 import Image from "next/image"
-import { Users, Bed, ChevronRight, Star } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Users, Bed, Star } from "lucide-react"
 import { useGSAP } from "@gsap/react"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { DateRange } from "react-day-picker"
+import { format } from "date-fns"
 
 // Register ScrollTrigger to ensure it works on client load
 if (typeof window !== "undefined") {
@@ -17,12 +20,14 @@ if (typeof window !== "undefined") {
 interface TopPickCardProps {
   unit: Unit
   index: number
-  // We'll add the click handler in Phase 3/4
+  pax?: number
+  dateRange?: DateRange
 }
 
-export function TopPickCard({ unit, index }: TopPickCardProps) {
+export function TopPickCard({ unit, index, pax, dateRange }: TopPickCardProps) {
   const cardRef = useRef<HTMLDivElement>(null)
   const imageRef = useRef<HTMLImageElement>(null)
+  const router = useRouter()
 
   useGSAP(() => {
     // Parallax Effect: Image moves slower than the container scroll
@@ -40,10 +45,21 @@ export function TopPickCard({ unit, index }: TopPickCardProps) {
     }
   }, { scope: cardRef })
 
+  const handleClick = () => {
+    // Construct query parameters
+    const params = new URLSearchParams()
+    if (pax) params.set('pax', pax.toString())
+    if (dateRange?.from) params.set('from', format(dateRange.from, 'yyyy-MM-dd'))
+    if (dateRange?.to) params.set('to', format(dateRange.to, 'yyyy-MM-dd'))
+    
+    router.push(`/book/${unit.slug}?${params.toString()}`)
+  }
+
   return (
     <div 
         ref={cardRef}
-        className="relative w-full aspect-[4/5] rounded-[32px] overflow-hidden shadow-2xl mb-8 group top-pick-card opacity-0 translate-y-24" // Initial state for parent stagger
+        onClick={handleClick}
+        className="relative w-full aspect-[4/5] rounded-[32px] overflow-hidden shadow-2xl mb-8 group top-pick-card opacity-0 translate-y-24 cursor-pointer hover:shadow-emerald-900/20 hover:scale-[1.02] transition-all duration-300" 
     >
       {/* Background Image Container with Overflow for Parallax */}
       <div className="absolute inset-0 bg-gray-900 overflow-hidden">

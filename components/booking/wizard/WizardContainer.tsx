@@ -156,12 +156,24 @@ export function WizardContainer({ initialUnits }: WizardContainerProps) {
              {/* Render Top Picks - Grid for Desktop */}
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-12">
                  {topPicks.map((unit, idx) => (
-                     <TopPickCard key={unit.id} unit={unit} index={idx} />
+                     <TopPickCard 
+                        key={unit.id} 
+                        unit={unit} 
+                        index={idx}
+                        pax={pax}
+                        dateRange={dateRange}
+                     />
                  ))}
              </div>
              
              {/* Render Remaining Units */}
-             {others.length > 0 && <StandardUnitList units={others} />}
+             {others.length > 0 && (
+                <StandardUnitList 
+                    units={others}
+                    pax={pax}
+                    dateRange={dateRange} 
+                />
+             )}
         </div>
       </div>
     )
