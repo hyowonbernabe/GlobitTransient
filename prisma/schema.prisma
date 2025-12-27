@@ -33,6 +33,28 @@ enum CommissionStatus {
   REJECTED
 }
 
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+  BOOKING_NEW
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  CLAIM_SUBMITTED
+  CLAIM_APPROVED
+  CLAIM_REJECTED
+  CHECKIN_SUMMARY
+  CHECKOUT_SUMMARY
+  SYSTEM_ALERT
+}
+
+enum ClaimStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 // --- Core Models ---
 
 model User {
@@ -51,6 +73,7 @@ model User {
   bookings       Booking[] @relation("ClientBookings")
   agentBookings  Booking[] @relation("AgentReferrals")
   commissions    Commission[]
+  claimRequests  ClaimRequest[] @relation("AgentClaims")
   notifications  Notification[]
   auditLogs      AuditLog[]
   reviews        Review[]
@@ -111,6 +134,7 @@ model Booking {
   updatedAt         DateTime  @updatedAt
   
   commissions       Commission[]
+  claimRequests     ClaimRequest[]
 
   @@index([checkIn, checkOut])
   @@index([userId])
@@ -131,17 +155,20 @@ model Commission {
 }
 
 model Notification {
-  id        String   @id @default(cuid())
+  id        String           @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
   message   String
-  type      String   @default("INFO") 
-  isRead    Boolean  @default(false)
+  type      NotificationType @default(INFO)
+  isRead    Boolean          @default(false)
   link      String?
-  createdAt DateTime @default(now())
+  metadata  Json?
+  adminOnly Boolean          @default(false)
+  createdAt DateTime         @default(now())
 
-  @@index([userId])
+  @@index([userId, isRead])
+  @@index([createdAt])
 }
 
 model AuditLog {
@@ -158,10 +185,29 @@ model AuditLog {
   @@index([action])
 }
 
+model ClaimRequest {
+  id          String      @id @default(cuid())
+  bookingId   String
+  booking     Booking     @relation(fields: [bookingId], references: [id])
+  agentId     String
+  agent       User        @relation("AgentClaims", fields: [agentId], references: [id])
+  description String?
+  proofImage  String?
+  status      ClaimStatus @default(PENDING)
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  createdAt   DateTime    @default(now())
+
+  @@index([agentId])
+  @@index([status])
+}
+
 model Review {
   id        String   @id @default(cuid())
   rating    Int      
   comment   String?  @db.Text
+  images    String[] @default([])
+  isVisible Boolean  @default(true)
   
   unitId    String
   unit      Unit     @relation(fields: [unitId], references: [id])
@@ -170,8 +216,10 @@ model Review {
   user      User     @relation(fields: [userId], references: [id])
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   
   @@index([unitId])
+  @@index([isVisible])
 }
 
 model KnowledgeSnippet {
