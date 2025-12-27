@@ -3,9 +3,10 @@ import { Footer } from "@/components/layout/Footer"
 import { Hero } from "@/components/landing/Hero"
 import { FeaturedUnits } from "@/components/landing/FeaturedUnits"
 import { LocationMap } from "@/components/landing/LocationMap"
+import { GallerySection } from "@/components/landing/GallerySection" // Import Gallery
 import { FAQSection } from "@/components/landing/FAQSection"
 import { ContactSection } from "@/components/landing/ContactSection"
-import { StickyCTA } from "@/components/landing/StickyCTA"
+// Removed StickyCTA import
 import prisma from "@/lib/prisma"
 
 export const dynamic = 'force-dynamic'
@@ -52,6 +53,7 @@ export default async function Home() {
       <Hero />
       <FeaturedUnits units={sortedUnits} />
       <LocationMap />
+      <GallerySection />
       <FAQSection />
       <ContactSection />
       <Footer />

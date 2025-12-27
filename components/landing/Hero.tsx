@@ -29,7 +29,7 @@ export function Hero() {
       duration: 1.2,
       stagger: 0.15,
       delay: 0.2,
-      clearProps: "all" // Ensure props are cleared after animation
+      clearProps: "all" 
     })
     .from(".hero-desc", {
       y: 20,
@@ -37,7 +37,6 @@ export function Hero() {
       duration: 0.8,
       clearProps: "all"
     }, "-=0.6")
-    // Fix for buttons: using fromTo to explicitly set end state or ensure 'from' resolves correctly
     .fromTo(".hero-cta", 
       { y: 20, opacity: 0 },
       { y: 0, opacity: 1, duration: 0.6, stagger: 0.1, clearProps: "transform,opacity" }
@@ -71,12 +70,18 @@ export function Hero() {
       scrollTrigger: {
         trigger: containerRef.current,
         start: "top top",
-        end: "50% top", // Fade out halfway through scroll
+        end: "50% top", 
         scrub: true
       }
     })
 
   }, { scope: containerRef })
+
+  const scrollToGallery = () => {
+    // Smooth scroll to gallery section
+    const gallery = document.getElementById('gallery');
+    gallery?.scrollIntoView({ behavior: 'smooth' });
+  }
 
   return (
     <section 
@@ -92,7 +97,7 @@ export function Hero() {
           fill
           priority
           className="object-cover object-center will-change-transform opacity-90"
-          placeholder="empty" // Or 'blur' if blurDataURL is available
+          placeholder="empty" 
         />
         {/* Cinematic Gradient Overlays for Readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80 z-10" />
@@ -130,11 +135,7 @@ export function Hero() {
           </Link>
           
           <button 
-            onClick={() => {
-                // Smooth scroll to featured units section
-                const featured = document.getElementById('featured-units');
-                featured?.scrollIntoView({ behavior: 'smooth' });
-            }}
+            onClick={scrollToGallery}
             className="hero-cta inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white transition-all duration-200 bg-white/10 backdrop-blur-md border border-white/20 rounded-full hover:bg-white/20 hover:scale-105"
           >
             Explore Gallery
