@@ -1,15 +1,12 @@
-import { redirect } from "next/navigation"
-import { auth } from "@/server/auth"
+"use client"
 
-export const dynamic = "force-dynamic"
+import { useState, useEffect } from "react"
+import { useRole } from "@/components/dashboard/RoleContext"
+import { AgentClaimsView } from "@/components/dashboard/claims/AgentClaimsView"
+import { AdminClaimsView } from "@/components/dashboard/claims/AdminClaimsView"
 
-export default async function ClaimsPage() {
-    const session = await auth()
-    if (!session?.user) {
-        redirect("/admin/login")
-    }
-
-    const isAdmin = session.user.role === "ADMIN"
+export default function ClaimsPage() {
+    const { isAdmin } = useRole()
 
     return (
         <div className="space-y-6">
@@ -24,14 +21,7 @@ export default async function ClaimsPage() {
                 </p>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-                <p className="text-blue-800 font-medium">
-                    Claims system coming in next phase
-                </p>
-                <p className="text-sm text-blue-600 mt-1">
-                    This will include claim submission for agents and approval workflow for admins
-                </p>
-            </div>
+            {isAdmin ? <AdminClaimsView /> : <AgentClaimsView />}
         </div>
     )
 }

@@ -21,6 +21,7 @@ export default async function CalendarPage() {
             checkIn: true,
             checkOut: true,
             status: true,
+            pax: true,
             user: { select: { name: true } },
             unitId: true,
         },
@@ -39,6 +40,7 @@ export default async function CalendarPage() {
         status: b.status as "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED",
         guestName: b.user.name,
         unitId: b.unitId,
+        pax: b.pax,
     }))
 
     return (

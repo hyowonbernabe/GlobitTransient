@@ -1,13 +1,17 @@
 'use client'
 
 import { useState, useEffect } from "react"
+import { useRole } from "@/components/dashboard/RoleContext"
 import { getOperationalBookings } from "@/server/actions/operations"
 import { OperationalBookingCard } from "./OperationalBookingCard"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Loader2, Calendar, ClipboardList, Info } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Loader2, Calendar, ClipboardList, Info, ChevronRight } from "lucide-react"
+import { addDays } from "date-fns"
 
 export function DailyOperationsView() {
+    const { isAdmin } = useRole()
     const [date, setDate] = useState(new Date().toISOString().split('T')[0])
     const [loading, setLoading] = useState(true)
     const [data, setData] = useState<{ checkingIn: any[], checkingOut: any[] }>({
@@ -27,6 +31,18 @@ export function DailyOperationsView() {
         load()
     }, [date])
 
+    const goToToday = () => {
+        setDate(new Date().toISOString().split('T')[0])
+    }
+
+    const goToTomorrow = () => {
+        const tomorrow = addDays(new Date(), 1)
+        setDate(tomorrow.toISOString().split('T')[0])
+    }
+
+    const isToday = date === new Date().toISOString().split('T')[0]
+    const isTomorrow = date === addDays(new Date(), 1).toISOString().split('T')[0]
+
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
@@ -38,8 +54,28 @@ export function DailyOperationsView() {
                     <p className="text-gray-500 mt-1">Manage guest check-ins and room transitions.</p>
                 </div>
 
-                <div className="w-full md:w-auto flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold uppercase text-gray-400 ml-1">Operational Date</label>
+                <div className="w-full md:w-auto flex flex-col gap-3">
+                    {/* Quick Toggles */}
+                    <div className="flex gap-2">
+                        <Button
+                            size="sm"
+                            variant={isToday ? "default" : "outline"}
+                            onClick={goToToday}
+                            className={isToday ? "bg-emerald-600 hover:bg-emerald-700" : ""}
+                        >
+                            Today
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant={isTomorrow ? "default" : "outline"}
+                            onClick={goToTomorrow}
+                            className={isTomorrow ? "bg-emerald-600 hover:bg-emerald-700" : ""}
+                        >
+                            Tomorrow
+                        </Button>
+                    </div>
+
+                    {/* Date Picker */}
                     <div className="relative">
                         <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                         <Input
@@ -59,7 +95,6 @@ export function DailyOperationsView() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
                     {/* Check-ins Section */}
                     <div className="space-y-6">
                         <div className="flex items-center justify-between border-b border-gray-100 pb-2">
@@ -81,7 +116,7 @@ export function DailyOperationsView() {
                                 </Card>
                             ) : (
                                 data.checkingIn.map(b => (
-                                    <OperationalBookingCard key={b.id} booking={b} type="IN" />
+                                    <OperationalBookingCard key={b.id} booking={b} type="IN" isAgent={!isAdmin} />
                                 ))
                             )}
                         </div>
@@ -108,12 +143,11 @@ export function DailyOperationsView() {
                                 </Card>
                             ) : (
                                 data.checkingOut.map(b => (
-                                    <OperationalBookingCard key={b.id} booking={b} type="OUT" />
+                                    <OperationalBookingCard key={b.id} booking={b} type="OUT" isAgent={!isAdmin} />
                                 ))
                             )}
                         </div>
                     </div>
-
                 </div>
             )}
         </div>

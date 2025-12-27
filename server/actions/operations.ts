@@ -24,7 +24,8 @@ export async function getOperationalBookings(dateStr: string) {
             },
             include: {
                 unit: true,
-                user: true
+                user: true,
+                agent: { select: { name: true, agentCode: true } }
             },
             orderBy: {
                 checkIn: 'asc'
