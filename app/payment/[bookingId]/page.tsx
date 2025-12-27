@@ -10,6 +10,7 @@ import { CheckCircle, ShieldCheck, Mail, XCircle } from "lucide-react"
 import { format } from "date-fns"
 import { PaymentCheckout } from "@/components/payment/PaymentCheckout"
 import { PaymentStatusPoller } from "@/components/payment/PaymentStatusPoller"
+import { BookingSuccess } from "@/components/payment/BookingSuccess"
 
 export const dynamic = 'force-dynamic'
 
@@ -38,14 +39,22 @@ export default async function PaymentPage(props: PageProps) {
 
   // 1. Success / Polling View
   if (booking.status === 'CONFIRMED') {
-    return <SuccessView booking={booking} />
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center p-4 pt-24">
+          <BookingSuccess booking={booking} />
+        </main>
+        <Footer />
+      </div>
+    )
   }
 
   if (searchParams.success === 'true') {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center p-4">
+        <main className="flex-1 flex items-center justify-center p-4 pt-24">
           <PaymentStatusPoller bookingId={booking.id} />
         </main>
         <Footer />
@@ -63,7 +72,7 @@ export default async function PaymentPage(props: PageProps) {
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
       <Navbar />
-      <main className="flex-1 py-8 md:py-12">
+      <main className="flex-1 py-12 pt-24 md:py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-6 order-2 md:order-1">
@@ -123,78 +132,13 @@ export default async function PaymentPage(props: PageProps) {
   )
 }
 
-function SuccessView({ booking }: { booking: any }) {
-  return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar />
-      <main className="flex-1 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md text-center p-8 space-y-6 shadow-2xl border-0 animate-in zoom-in-95 duration-500">
-          <div className="mx-auto w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mb-2">
-            <CheckCircle className="w-12 h-12" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Booking Confirmed!</h1>
-            <p className="text-gray-600 mt-2">
-              Your payment was successful and your slot is now secured.
-            </p>
-          </div>
 
-          <div className="space-y-2">
-            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Reference Number</p>
-            <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 font-mono text-lg font-bold text-emerald-900 select-all break-all shadow-inner">
-              {booking.id}
-            </div>
-          </div>
-
-          <Card className="bg-gray-50 border-gray-100 shadow-none overflow-hidden text-left">
-            <div className="bg-gray-100/50 px-4 py-2 border-b border-gray-100">
-              <span className="text-[10px] font-bold uppercase text-gray-500">Reservation Details</span>
-            </div>
-            <div className="p-4 space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500 underline underline-offset-4 decoration-gray-200">Guest</span>
-                <span className="text-sm font-semibold text-gray-900">{booking.user.name}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500 underline underline-offset-4 decoration-gray-200">Stay Duration</span>
-                <span className="text-sm font-semibold text-gray-900">{format(booking.checkIn, "MMM dd")} - {format(booking.checkOut, "MMM dd")}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500 underline underline-offset-4 decoration-gray-200">Unit</span>
-                <span className="text-sm font-semibold text-gray-900 text-right">{booking.unit.name}</span>
-              </div>
-              <div className="flex justify-between items-center text-emerald-700 font-bold border-t border-emerald-100 pt-2 mt-2">
-                <span className="text-sm">Balance at Check-in</span>
-                <span className="text-base">{formatMoney(booking.totalPrice - booking.downpayment)}</span>
-              </div>
-            </div>
-          </Card>
-
-          <div className="flex items-center justify-center gap-2 text-sm text-emerald-700 bg-emerald-50/50 p-3 rounded-lg border border-emerald-100">
-            <Mail className="w-4 h-4" />
-            <span>A confirmation email has been sent.</span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 pt-4">
-            <Button asChild variant="outline" className="h-11">
-              <a href="/">Home</a>
-            </Button>
-            <Button asChild className="bg-emerald-600 hover:bg-emerald-700 h-11 shadow-lg shadow-emerald-100">
-              <a href="/track">Track Booking</a>
-            </Button>
-          </div>
-        </Card>
-      </main>
-      <Footer />
-    </div>
-  )
-}
 
 function CancelledView({ bookingId }: { bookingId: string }) {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
-      <main className="flex-1 flex items-center justify-center p-4">
+      <main className="flex-1 flex items-center justify-center p-4 pt-24">
         <Card className="w-full max-w-md text-center p-8 space-y-6 shadow-md border-red-100">
           <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-600 mb-2">
             <XCircle className="w-8 h-8" />
