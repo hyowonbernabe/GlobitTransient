@@ -66,12 +66,13 @@ export default async function UnitPage(props: PageProps) {
   const carBlockedDates = await getCarBlockedDates()
 
   // Amenity Flags (Mapped from Config in future, currently DB columns)
+  // Amenity Flags (Mapped from Config in future, currently hardcoded defaults)
   const amenities = [
-    { label: "Wifi", icon: Wifi, available: true }, // Default true for modern units
-    { label: "Own CR", icon: Bath, available: unit.hasOwnCR },
-    { label: "TV", icon: Tv, available: unit.hasTV },
-    { label: "Ref", icon: Snowflake, available: unit.hasRef },
-    { label: "Heater", icon: Wind, available: unit.hasHeater },
+    { label: "Wifi", icon: Wifi, available: true },
+    { label: "Own CR", icon: Bath, available: true }, // Defaulting to true for now
+    { label: "TV", icon: Tv, available: true },
+    { label: "Ref", icon: Snowflake, available: true },
+    { label: "Heater", icon: Wind, available: true },
   ].filter(a => a.available)
 
 
@@ -141,7 +142,7 @@ export default async function UnitPage(props: PageProps) {
                     <Users className="w-3 h-3" />
                     Good to {unit.basePax} - {unit.maxPax} Pax
                   </Badge>
-                  {unit.hasOwnCR ? (
+                  {true ? (
                     <Badge variant="outline" className="px-3 py-1 border-blue-200 bg-blue-50 text-blue-800 gap-1.5 rounded-full">
                       <Bath className="w-3 h-3" /> Own CR
                     </Badge>
