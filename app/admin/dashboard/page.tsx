@@ -22,7 +22,7 @@ async function getDashboardData() {
   })
 
   const confirmedCount = await prisma.booking.count({
-    where: { 
+    where: {
       status: 'CONFIRMED',
       checkIn: { gte: new Date() }
     }
@@ -43,8 +43,7 @@ async function getDashboardData() {
       checkIn: { gte: new Date() }
     },
     _sum: {
-      adults: true,
-      kids: true
+      pax: true
     }
   })
 
@@ -84,7 +83,7 @@ async function getDashboardData() {
       pending: pendingCount,
       confirmed: confirmedCount,
       revenue: revenueData._sum.totalPrice || 0,
-      guests: (guestData._sum.adults || 0) + (guestData._sum.kids || 0)
+      guests: guestData._sum.pax || 0
     },
     recentBookings: formattedBookings
   }
@@ -94,8 +93,8 @@ export default async function DashboardPage() {
   const { stats, recentBookings } = await getDashboardData()
   const revenueChartData = await getRevenueData()
   const occupancyChartData = await getOccupancyData()
-  
-  const formatMoney = (val: number) => 
+
+  const formatMoney = (val: number) =>
     new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(val / 100)
 
   return (
@@ -106,7 +105,7 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        
+
         <Card className="border-l-4 border-l-yellow-500 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
@@ -156,11 +155,11 @@ export default async function DashboardPage() {
         </Card>
 
       </div>
-      
+
       {/* Interactive Charts */}
-      <AnalyticsCharts 
-        revenueData={revenueChartData} 
-        occupancyData={occupancyChartData} 
+      <AnalyticsCharts
+        revenueData={revenueChartData}
+        occupancyData={occupancyChartData}
       />
 
       {/* Recent Activity Table */}
@@ -168,7 +167,7 @@ export default async function DashboardPage() {
         <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Bookings</h2>
         <RecentBookings bookings={recentBookings} />
       </div>
-      
+
     </div>
   )
 }
